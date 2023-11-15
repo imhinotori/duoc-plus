@@ -101,3 +101,7 @@ fabric.properties
 .idea/*
 .idea/
 .idea
+
+# Ignore Keys!
+keys/*
+!keys/.exist

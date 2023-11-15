@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/quic-go/quic-go/http3"
 	"net"
 	"strconv"
@@ -12,6 +13,8 @@ import (
 type Server struct {
 	Application   *iris.Application
 	Configuration *config.Config
+	JWTSigner     *jwt.Signer
+	JWTVerifier   *jwt.Verifier
 }
 
 func New(cfgOpts ...config.Option) (*Server, error) {
@@ -31,6 +34,11 @@ func New(cfgOpts ...config.Option) (*Server, error) {
 	server := &Server{
 		Application:   app,
 		Configuration: cfg,
+	}
+
+	err := server.assignJWTFiles()
+	if err != nil {
+		return nil, err
 	}
 
 	return server, nil

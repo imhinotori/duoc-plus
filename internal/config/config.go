@@ -19,8 +19,9 @@ type HTTP struct {
 }
 
 type JWT struct {
-	PrivateKey string `koanf:"private-key"`
-	PublicKey  string `koanf:"public-key"`
+	PrivateKey   string `koanf:"private-key"`
+	PublicKey    string `koanf:"public-key"`
+	AutoGenerate bool   `koanf:"auto-generate"`
 }
 
 func Default() *Config {
@@ -34,8 +35,9 @@ func Default() *Config {
 			SSL:     false,
 		},
 		JWT: JWT{
-			PrivateKey: "./keys/private.pem",
-			PublicKey:  "./keys/public.pem",
+			PrivateKey:   "./keys/private.pem",
+			PublicKey:    "./keys/public.pem",
+			AutoGenerate: true,
 		},
 	}
 }
