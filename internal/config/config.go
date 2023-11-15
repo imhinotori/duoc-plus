@@ -14,6 +14,8 @@ type HTTP struct {
 	Address string `koanf:"address"`
 	Port    int    `koanf:"port"`
 	SSL     bool   `koanf:"ssl"`
+	SSLCert string `koanf:"ssl-cert"`
+	SSLKey  string `koanf:"ssl-key"`
 }
 
 type JWT struct {
