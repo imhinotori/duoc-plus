@@ -105,3 +105,6 @@ fabric.properties
 # Ignore Keys!
 keys/*
 !keys/.exist
+
+# Ignore config...
+config.toml
