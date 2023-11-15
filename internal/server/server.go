@@ -27,7 +27,6 @@ func New(cfgOpts ...config.Option) (*Server, error) {
 		log.SetLevel(log.InfoLevel)
 		app.Logger().SetLevel("info")
 	}
-	app.RegisterView(iris.Blocks("./web/views", ".html").Reload(cfg.General.Debug))
 
 	server := &Server{
 		Application:   app,
