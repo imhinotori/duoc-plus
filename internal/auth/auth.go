@@ -118,3 +118,37 @@ func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
 	return s.Signer.NewTokenPair(claims, refreshClaims, 120*time.Hour) // TODO!
 
 }
+
+func (s Service) RefreshToken(claims Claims) (jwt.TokenPair, error) {
+	log.Debug("Trying to refresh user token", "username", claims.Username)
+	endpoint := "/auth/realms/WEB_APPS_PRD/protocol/openid-connect/token"
+
+	data := url.Values{}
+	data.Set("client_id", s.Config.Duoc.ClientId)
+	data.Set("client_secret", s.Config.Duoc.ClientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", claims.DuocApiRefreshToken)
+
+	response, code, err := s.Duoc.Request(s.Config.Duoc.SSOURL+endpoint, "POST", []byte(data.Encode()), nil)
+
+	if err != nil {
+		return jwt.TokenPair{}, err
+	}
+
+	if code != iris.StatusOK {
+		return jwt.TokenPair{}, fmt.Errorf("invalid response structure: %s", string(response))
+	}
+
+	var ssoResponseData ssoAuthResponse
+
+	if err = json.Unmarshal(response, &ssoResponseData); err != nil {
+		return jwt.TokenPair{}, err
+	}
+
+	log.Debug("Successfully refreshed user tokens", "username", claims.Username)
+
+	claims.DuocApiBearerToken = ssoResponseData.AccessToken
+	claims.DuocApiRefreshToken = ssoResponseData.RefreshToken
+
+	return jwt.TokenPair{AccessToken: json.RawMessage(claims.DuocApiBearerToken), RefreshToken: json.RawMessage(claims.DuocApiRefreshToken)}, nil
+}
