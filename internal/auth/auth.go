@@ -36,11 +36,12 @@ type Credentials struct {
 }
 
 type Claims struct {
-	Username    string `json:"username"`
-	Email       string `json:"email"`     // Its username + @duocuc.cl
-	StudentCode string `json:"codAlumno"` // It's probably an int, but well.
-	StudentId   int    `json:"idAlumno"`  // Why two ids (?) I don't know.
-	ApiBearer   string `json:"api_bearer"`
+	Username            string `json:"username"`
+	Email               string `json:"email"`     // Its username + @duocuc.cl
+	StudentCode         string `json:"codAlumno"` // It's probably an int, but well.
+	StudentId           int    `json:"idAlumno"`  // Why two ids (?) I don't know.
+	DuocApiBearerToken  string `json:"api_bearer"`
+	DuocApiRefreshToken string `json:"refresh_token"`
 }
 
 func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
@@ -103,11 +104,11 @@ func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
 	log.Debug("Successfully got some general data", "username", credentials.Username)
 
 	claims := Claims{
-		Username:    credentials.Username,
-		Email:       strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
-		StudentCode: responseData.CodAlumno,
-		StudentId:   responseData.IDAlumno,
-		ApiBearer:   ssoResponseData.AccessToken,
+		Username:           credentials.Username,
+		Email:              strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
+		StudentCode:        responseData.CodAlumno,
+		StudentId:          responseData.IDAlumno,
+		DuocApiBearerToken: ssoResponseData.AccessToken,
 	}
 
 	refreshClaims := jwt.Claims{Subject: strconv.Itoa(responseData.IDAlumno)}
