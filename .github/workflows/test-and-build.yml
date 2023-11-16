@@ -16,7 +16,7 @@ jobs:
       - name: Setup GO
         uses: actions/setup-go@v4
         with:
-          go-version: 'latest'
+          go-version: 'stable'
 
       - name: Install Dependencies
         run: |
@@ -46,7 +46,7 @@ jobs:
       - name: Setup GO
         uses: actions/setup-go@v4
         with:
-          go-version: 'latest'
+          go-version: 'stable'
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
