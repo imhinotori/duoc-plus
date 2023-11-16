@@ -2,7 +2,9 @@ package server
 
 import (
 	"github.com/charmbracelet/log"
+	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/config"
+	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/quic-go/quic-go/http3"
@@ -15,6 +17,12 @@ type Server struct {
 	Configuration *config.Config
 	JWTSigner     *jwt.Signer
 	JWTVerifier   *jwt.Verifier
+	Duoc          *duoc.Client
+	Handlers      *Handlers
+}
+
+type Handlers struct {
+	authHandler auth.Handler
 }
 
 func New(cfgOpts ...config.Option) (*Server, error) {
@@ -31,15 +39,21 @@ func New(cfgOpts ...config.Option) (*Server, error) {
 		app.Logger().SetLevel("info")
 	}
 
+	httpClient, err := duoc.NewHost(cfg)
+
 	server := &Server{
 		Application:   app,
 		Configuration: cfg,
+		Duoc:          httpClient,
+		Handlers:      &Handlers{},
 	}
 
-	err := server.assignJWTFiles()
+	err = server.assignJWTFiles()
 	if err != nil {
 		return nil, err
 	}
+
+	server.Handlers.authHandler = auth.Handler{Service: auth.New(cfg, server.JWTSigner, server.JWTVerifier, server.Duoc)}
 
 	return server, nil
 }
@@ -56,6 +70,8 @@ func (s *Server) Run() error {
 	}
 
 	log.Warn("SSL disabled, this is not recommended.")
+
+	s.Handlers.authHandler.Start(s.Application)
 
 	return s.Application.Run(iris.Addr(addr))
 }
