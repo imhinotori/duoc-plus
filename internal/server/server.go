@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/charmbracelet/log"
+	"github.com/imhinotori/duoc-plus/internal/attendance"
 	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
@@ -22,7 +23,8 @@ type Server struct {
 }
 
 type Handlers struct {
-	authHandler auth.Handler
+	authHandler       auth.Handler
+	attendanceHandler attendance.Handler
 }
 
 func New(cfgOpts ...config.Option) (*Server, error) {
@@ -54,12 +56,17 @@ func New(cfgOpts ...config.Option) (*Server, error) {
 	}
 
 	server.Handlers.authHandler = auth.Handler{Service: auth.New(cfg, server.JWTSigner, server.JWTVerifier, server.Duoc)}
+	server.Handlers.attendanceHandler = attendance.Handler{Service: attendance.New(cfg, server.Duoc)}
 
 	return server, nil
 }
 
 func (s *Server) Run() error {
 	addr := net.JoinHostPort(s.Configuration.HTTP.Address, strconv.Itoa(s.Configuration.HTTP.Port))
+
+	verifyMiddleware := s.JWTVerifier.Verify(func() interface{} {
+		return new(auth.Claims)
+	})
 
 	if s.Configuration.HTTP.SSL {
 		log.Info("SSL enabled.")
@@ -72,6 +79,7 @@ func (s *Server) Run() error {
 	log.Warn("SSL disabled, this is not recommended.")
 
 	s.Handlers.authHandler.Start(s.Application)
+	s.Handlers.attendanceHandler.Start(s.Application, verifyMiddleware)
 
 	return s.Application.Run(iris.Addr(addr))
 }
