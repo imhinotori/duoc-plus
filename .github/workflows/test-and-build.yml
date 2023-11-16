@@ -1,0 +1,61 @@
+name: Test, Build and Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup GO
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'latest'
+
+      - name: Install Dependencies
+        run: |
+          go mod tidy
+          go get ./cmd
+
+      - name: Initialize Testing
+        run: |
+          go test -v ./... -json > results.json
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: results.json
+
+  docker_upload:
+    name: Build and Deploy to Docker Hub
+
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      REPO: ${{ secrets.DOCKER_REPO }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup GO
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'latest'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build . --tag ghcr.io/${{github.repository}}:latest
+          docker push ghcr.io/${{github.repository}}:latest
