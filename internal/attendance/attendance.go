@@ -30,7 +30,7 @@ func (s Service) Attendance(claims *auth.Claims) ([]common.Attendance, error) {
 	query := url.Values{}
 	query.Set("codAlumno", claims.StudentCode)
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.ApiBearer)
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
 
 	if err != nil {
 		return []common.Attendance{}, err
