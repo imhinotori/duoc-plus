@@ -6,6 +6,7 @@ import (
 	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
+	"github.com/imhinotori/duoc-plus/internal/schedule"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/quic-go/quic-go/http3"
@@ -25,6 +26,7 @@ type Server struct {
 type Handlers struct {
 	authHandler       auth.Handler
 	attendanceHandler attendance.Handler
+	scheduleHandler   schedule.Handler
 }
 
 func New(cfgOpts ...config.Option) (*Server, error) {
@@ -57,6 +59,7 @@ func New(cfgOpts ...config.Option) (*Server, error) {
 
 	server.Handlers.authHandler = auth.Handler{Service: auth.New(cfg, server.JWTSigner, server.JWTVerifier, server.Duoc)}
 	server.Handlers.attendanceHandler = attendance.Handler{Service: attendance.New(cfg, server.Duoc)}
+	server.Handlers.scheduleHandler = schedule.Handler{Service: schedule.New(cfg, server.Duoc)}
 
 	return server, nil
 }
@@ -80,6 +83,7 @@ func (s *Server) Run() error {
 
 	s.Handlers.authHandler.Start(s.Application)
 	s.Handlers.attendanceHandler.Start(s.Application, verifyMiddleware)
+	s.Handlers.scheduleHandler.Start(s.Application, verifyMiddleware)
 
 	return s.Application.Run(iris.Addr(addr))
 }
