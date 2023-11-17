@@ -45,8 +45,8 @@ func Default() *Config {
 			SSL:     false,
 		},
 		JWT: JWT{
-			PrivateKey:   "./keys/private.pem",
-			PublicKey:    "./keys/public.pem",
+			PrivateKey:   "./data/private.pem",
+			PublicKey:    "./data/public.pem",
 			AutoGenerate: true,
 		},
 	}

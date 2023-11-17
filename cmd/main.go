@@ -12,7 +12,7 @@ import (
 func main() {
 	k := koanf.New(".")
 
-	if err := k.Load(file.Provider("config.toml"), toml.Parser()); err != nil {
+	if err := k.Load(file.Provider("data/config.toml"), toml.Parser()); err != nil {
 		log.Fatal("Failed reading configuration", "err", err)
 	}
 
