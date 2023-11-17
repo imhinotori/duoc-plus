@@ -103,8 +103,9 @@ fabric.properties
 .idea
 
 # Ignore Keys!
-keys/*
-!keys/.exist
+data/*
+!data/.exist
+!data/config.toml.template
 
 # Ignore config...
 config.toml
