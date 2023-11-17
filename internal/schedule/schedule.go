@@ -25,7 +25,7 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Attendance(claims *auth.Claims) ([]common.Day, error) {
+func (s Service) Schedule(claims *auth.Claims) ([]common.Day, error) {
 	endpoint := "/horario_v1.0/v1/horario"
 
 	query := url.Values{}
