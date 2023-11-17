@@ -19,7 +19,7 @@ type Course struct {
 	Section    string `json:"seccion"`
 }
 
-type Career struct {
+type Schedule struct {
 	CodeCareer string `json:"codCarrera"`
 	NameCareer string `json:"nomCarrera"`
 	Days       []Day  `json:"dias"`
