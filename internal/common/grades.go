@@ -1,7 +1,9 @@
 package common
 
 type GradesCourses struct {
-	Subjects []Subject `json:"asignaturas"`
+	DegreeName string    `json:"nomCarrera"`
+	DegreeCode string    `json:"codCarrera"`
+	Subjects   []Subject `json:"asignaturas"`
 }
 
 type Subject struct {
