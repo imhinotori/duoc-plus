@@ -24,7 +24,7 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Attendance(claims *auth.Claims) ([]common.Attendance, error) {
+func (s Service) Attendance(claims *auth.Claims) ([]common.DuocAttendance, error) {
 	endpoint := "/asistencia_v1.0/v1/asistenciaCompleta"
 
 	query := url.Values{}
@@ -33,14 +33,14 @@ func (s Service) Attendance(claims *auth.Claims) ([]common.Attendance, error) {
 	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
 
 	if err != nil {
-		return []common.Attendance{}, err
+		return []common.DuocAttendance{}, err
 	}
 
 	if code != iris.StatusOK {
-		return []common.Attendance{}, fmt.Errorf("invalid response structure: %s", string(response))
+		return []common.DuocAttendance{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
-	var responseData []common.Attendance
+	var responseData []common.DuocAttendance
 
 	if err = json.Unmarshal(response, &responseData); err != nil {
 		return responseData, err

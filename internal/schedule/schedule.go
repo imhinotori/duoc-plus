@@ -25,7 +25,7 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Schedule(claims *auth.Claims) ([]common.Schedule, error) {
+func (s Service) Schedule(claims *auth.Claims) ([]common.DuocSchedule, error) {
 	endpoint := "/horario_v1.0/v1/horario"
 
 	query := url.Values{}
@@ -34,17 +34,17 @@ func (s Service) Schedule(claims *auth.Claims) ([]common.Schedule, error) {
 	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
 
 	if err != nil {
-		return []common.Schedule{}, err
+		return []common.DuocSchedule{}, err
 	}
 
 	if code != iris.StatusOK {
-		return []common.Schedule{}, fmt.Errorf("invalid response structure: %s", string(response))
+		return []common.DuocSchedule{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
-	var responseData []common.Schedule
+	var responseData []common.DuocSchedule
 
 	if err = json.Unmarshal(response, &responseData); err != nil {
-		return []common.Schedule{}, err
+		return []common.DuocSchedule{}, err
 	}
 
 	log.Debug("Getting schedule data", "username", claims.Username)

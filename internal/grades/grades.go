@@ -24,7 +24,7 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Grades(claims *auth.Claims) ([]common.GradesCourses, error) {
+func (s Service) Grades(claims *auth.Claims) ([]common.DuocGradesCourses, error) {
 	endpoint := "/notas_v1.0/v1/notasAlumno"
 
 	query := url.Values{}
@@ -33,14 +33,14 @@ func (s Service) Grades(claims *auth.Claims) ([]common.GradesCourses, error) {
 	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
 
 	if err != nil {
-		return []common.GradesCourses{}, err
+		return []common.DuocGradesCourses{}, err
 	}
 
 	if code != iris.StatusOK {
-		return []common.GradesCourses{}, fmt.Errorf("invalid response structure: %s", string(response))
+		return []common.DuocGradesCourses{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
-	var responseData []common.GradesCourses
+	var responseData []common.DuocGradesCourses
 
 	if err = json.Unmarshal(response, &responseData); err != nil {
 		return responseData, err
