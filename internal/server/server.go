@@ -81,6 +81,8 @@ func (s *Server) Run() error {
 	s.Handlers.scheduleHandler.Start(s.Application, verifyMiddleware)
 	s.Handlers.gradesHandler.Start(s.Application, verifyMiddleware)
 
+	handleSwagger(s)
+
 	if s.Configuration.HTTP.SSL {
 		log.Info("SSL enabled.")
 
