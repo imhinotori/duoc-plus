@@ -22,6 +22,14 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 	party.Get("/", h.Attendance)
 }
 
+// Attendance
+// @Description Get user attendance
+// @Accept  json
+// @Produce  json
+// @Security Bearer
+// @Success 200 {object} common.Attendance	"Successfully retrieved attendance"
+// @Failure 400 {object} string "Error getting attendance."
+// @Router /attendance [get]
 func (h Handler) Attendance(ctx iris.Context) {
 	claims := jwt.Get(ctx).(*auth.Claims)
 

@@ -17,6 +17,15 @@ func (h Handler) Start(app *iris.Application) {
 	party.Post("/", h.Authenticate)
 }
 
+// Authenticate
+// @Description Authenticate
+// @Accept  json
+// @Produce  json
+// @Param   username     query    string     true        "Username of the user"
+// @Param   password      query    string     true        "Password of the user"
+// @Success 200 {object} common.AuthenticationResponse	"ok"
+// @Failure 400 {object} string "Error reading body."
+// @Router /auth [post]
 func (h Handler) Authenticate(ctx iris.Context) {
 	var creds Credentials
 

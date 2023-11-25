@@ -21,6 +21,14 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 	party.Get("/", h.Schedule)
 }
 
+// Schedule
+// @Description Get user schedule
+// @Accept  json
+// @Produce  json
+// @Security Bearer
+// @Success 200 {object} common.Schedule	"Successfully retrieved schedule"
+// @Failure 400 {object} string "Error getting schedule."
+// @Router /schedule [get]
 func (h Handler) Schedule(ctx iris.Context) {
 	claims := jwt.Get(ctx).(*auth.Claims)
 

@@ -10,6 +10,21 @@ import (
 	"os"
 )
 
+// @title Duoc Plus API
+// @version 1.0
+// @description Duoc Plus, is a REST API that allows you to access your grades, schedule and attendance from DuocUC.
+// @termsOfService https://www.duoc.cl/politica-privacidad/
+// @securityDefinitions.bearerAuth Bearer
+
+// @contact.name Matias "Hinotori" Canovas
+// @contact.url https://github.com/imhinotori/
+// @contact.email hello@hinotori.moe
+
+// @license.name MIT
+// @license.url https://opensource.org/license/mit/
+
+// @host api-duoc.hinotori.moe
+// @BasePath /
 func main() {
 	k := koanf.New(".")
 

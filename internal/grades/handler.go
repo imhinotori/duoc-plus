@@ -22,6 +22,14 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 	party.Get("/", h.Grades)
 }
 
+// Grades
+// @Description Get user grades
+// @Accept  json
+// @Produce  json
+// @Security Bearer
+// @Success 200 {object} common.GradesCourses	"Successfully retrieved grades"
+// @Failure 400 {object} string "Error getting grades."
+// @Router /grades [get]
 func (h Handler) Grades(ctx iris.Context) {
 	claims := jwt.Get(ctx).(*auth.Claims)
 
