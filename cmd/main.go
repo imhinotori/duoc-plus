@@ -7,12 +7,23 @@ import (
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
+	"os"
 )
 
 func main() {
 	k := koanf.New(".")
 
-	if err := k.Load(file.Provider("data/config.toml"), toml.Parser()); err != nil {
+	var basePath string
+
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		log.Debug("Running inside Docker container")
+		basePath = "/data/"
+	} else {
+		log.Debug("Running outside Docker container")
+		basePath = "data/"
+	}
+
+	if err := k.Load(file.Provider(basePath+"config.toml"), toml.Parser()); err != nil {
 		log.Fatal("Failed reading configuration", "err", err)
 	}
 
