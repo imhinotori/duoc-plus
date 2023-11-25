@@ -59,3 +59,15 @@ jobs:
         run: |
           docker build . --tag ghcr.io/${{github.repository}}:latest
           docker push ghcr.io/${{github.repository}}:latest
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [docker_upload]
+    steps:
+      - name: Deploy to Development
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          method: POST
+          preventFailureOnNoResponse: true
+          ignoreStatusCodes: '204'
