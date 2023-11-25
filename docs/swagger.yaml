@@ -1,16 +1,5 @@
 basePath: /
 definitions:
-  common.Attendance:
-    properties:
-      asistenciaAsignaturas:
-        items:
-          $ref: '#/definitions/common.SubjectAttendance'
-        type: array
-      codCarrera:
-        type: string
-      nomCarrera:
-        type: string
-    type: object
   common.AuthenticationResponse:
     properties:
       access_token:
@@ -22,103 +11,91 @@ definitions:
       refresh_token:
         type: string
     type: object
+  common.CareerSchedule:
+    properties:
+      career_name:
+        type: string
+      schedule:
+        $ref: '#/definitions/common.Week'
+    type: object
   common.Course:
     properties:
-      codPlan:
+      classroom:
         type: string
-      dia:
+      end_time:
         type: string
-      horaFin:
+      instructor:
         type: string
-      horaInicio:
+      start_time:
         type: string
-      nombre:
+      subject_code:
         type: string
-      nombrePlan:
-        type: string
-      profesor:
-        type: string
-      sala:
-        type: string
-      seccion:
-        type: string
-      sede:
-        type: string
-      sigla:
+      subject_name:
         type: string
     type: object
-  common.Day:
+  common.DuocAttendance:
     properties:
-      dia:
-        type: string
-      ramos:
+      asistenciaAsignaturas:
         items:
-          $ref: '#/definitions/common.Course'
+          $ref: '#/definitions/common.DuocSubjectAttendance'
         type: array
+      codCarrera:
+        type: string
+      nomCarrera:
+        type: string
     type: object
-  common.Grade:
+  common.DuocGrade:
     properties:
       nota:
         type: string
       texto:
         type: string
     type: object
-  common.GradesCourses:
+  common.DuocGradesCourses:
     properties:
       asignaturas:
         items:
-          $ref: '#/definitions/common.Subject'
+          $ref: '#/definitions/common.DuocSubject'
         type: array
       codCarrera:
         type: string
       nomCarrera:
         type: string
     type: object
-  common.Schedule:
-    properties:
-      codCarrera:
-        type: string
-      dias:
-        items:
-          $ref: '#/definitions/common.Day'
-        type: array
-      nomCarrera:
-        type: string
-    type: object
-  common.Subject:
+  common.DuocSubject:
     properties:
       codAsignatura:
         type: string
       examenes:
         items:
-          $ref: '#/definitions/common.Grade'
+          $ref: '#/definitions/common.DuocGrade'
         type: array
       nombre:
         type: string
       parciales:
         items:
-          $ref: '#/definitions/common.Grade'
+          $ref: '#/definitions/common.DuocGrade'
         type: array
       promedio:
         type: string
     type: object
-  common.SubjectAttendance:
+  common.DuocSubjectAttendance:
     properties:
       cabecera:
-        $ref: '#/definitions/common.SubjectAttendanceHeader'
+        $ref: '#/definitions/common.DuocSubjectAttendanceHeader'
       detalle:
         items:
-          $ref: '#/definitions/common.SubjectAttendanceDetail'
+          $ref: '#/definitions/common.DuocSubjectAttendanceDetail'
         type: array
     type: object
-  common.SubjectAttendanceDetail:
+  common.DuocSubjectAttendanceDetail:
     properties:
       asistencia:
         type: string
       fechaLarga:
         type: string
     type: object
-  common.SubjectAttendanceHeader:
+  common.DuocSubjectAttendanceHeader:
     properties:
       clasesAsistente:
         type: string
@@ -131,6 +108,37 @@ definitions:
       porcentaje:
         description: Why...?
         type: string
+    type: object
+  common.Week:
+    properties:
+      friday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
+      monday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
+      saturday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
+      sunday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
+      thursday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
+      tuesday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
+      wednesday:
+        items:
+          $ref: '#/definitions/common.Course'
+        type: array
     type: object
 host: api-duoc.hinotori.moe
 info:
@@ -158,7 +166,7 @@ paths:
         "200":
           description: Successfully retrieved attendance
           schema:
-            $ref: '#/definitions/common.Attendance'
+            $ref: '#/definitions/common.DuocAttendance'
         "400":
           description: Error getting attendance.
           schema:
@@ -203,7 +211,7 @@ paths:
         "200":
           description: Successfully retrieved grades
           schema:
-            $ref: '#/definitions/common.GradesCourses'
+            $ref: '#/definitions/common.DuocGradesCourses'
         "400":
           description: Error getting grades.
           schema:
@@ -221,7 +229,7 @@ paths:
         "200":
           description: Successfully retrieved schedule
           schema:
-            $ref: '#/definitions/common.Schedule'
+            $ref: '#/definitions/common.CareerSchedule'
         "400":
           description: Error getting schedule.
           schema:

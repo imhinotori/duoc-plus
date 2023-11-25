@@ -42,7 +42,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved attendance",
                         "schema": {
-                            "$ref": "#/definitions/common.Attendance"
+                            "$ref": "#/definitions/common.DuocAttendance"
                         }
                     },
                     "400": {
@@ -113,7 +113,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved grades",
                         "schema": {
-                            "$ref": "#/definitions/common.GradesCourses"
+                            "$ref": "#/definitions/common.DuocGradesCourses"
                         }
                     },
                     "400": {
@@ -143,7 +143,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved schedule",
                         "schema": {
-                            "$ref": "#/definitions/common.Schedule"
+                            "$ref": "#/definitions/common.CareerSchedule"
                         }
                     },
                     "400": {
@@ -157,23 +157,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "common.Attendance": {
-            "type": "object",
-            "properties": {
-                "asistenciaAsignaturas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.SubjectAttendance"
-                    }
-                },
-                "codCarrera": {
-                    "type": "string"
-                },
-                "nomCarrera": {
-                    "type": "string"
-                }
-            }
-        },
         "common.AuthenticationResponse": {
             "type": "object",
             "properties": {
@@ -191,59 +174,58 @@ const docTemplate = `{
                 }
             }
         },
+        "common.CareerSchedule": {
+            "type": "object",
+            "properties": {
+                "career_name": {
+                    "type": "string"
+                },
+                "schedule": {
+                    "$ref": "#/definitions/common.Week"
+                }
+            }
+        },
         "common.Course": {
             "type": "object",
             "properties": {
-                "codPlan": {
+                "classroom": {
                     "type": "string"
                 },
-                "dia": {
+                "end_time": {
                     "type": "string"
                 },
-                "horaFin": {
+                "instructor": {
                     "type": "string"
                 },
-                "horaInicio": {
+                "start_time": {
                     "type": "string"
                 },
-                "nombre": {
+                "subject_code": {
                     "type": "string"
                 },
-                "nombrePlan": {
-                    "type": "string"
-                },
-                "profesor": {
-                    "type": "string"
-                },
-                "sala": {
-                    "type": "string"
-                },
-                "seccion": {
-                    "type": "string"
-                },
-                "sede": {
-                    "type": "string"
-                },
-                "sigla": {
+                "subject_name": {
                     "type": "string"
                 }
             }
         },
-        "common.Day": {
+        "common.DuocAttendance": {
             "type": "object",
             "properties": {
-                "dia": {
-                    "type": "string"
-                },
-                "ramos": {
+                "asistenciaAsignaturas": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.Course"
+                        "$ref": "#/definitions/common.DuocSubjectAttendance"
                     }
+                },
+                "codCarrera": {
+                    "type": "string"
+                },
+                "nomCarrera": {
+                    "type": "string"
                 }
             }
         },
-        "common.Grade": {
+        "common.DuocGrade": {
             "type": "object",
             "properties": {
                 "nota": {
@@ -254,13 +236,13 @@ const docTemplate = `{
                 }
             }
         },
-        "common.GradesCourses": {
+        "common.DuocGradesCourses": {
             "type": "object",
             "properties": {
                 "asignaturas": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.Subject"
+                        "$ref": "#/definitions/common.DuocSubject"
                     }
                 },
                 "codCarrera": {
@@ -271,24 +253,7 @@ const docTemplate = `{
                 }
             }
         },
-        "common.Schedule": {
-            "type": "object",
-            "properties": {
-                "codCarrera": {
-                    "type": "string"
-                },
-                "dias": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.Day"
-                    }
-                },
-                "nomCarrera": {
-                    "type": "string"
-                }
-            }
-        },
-        "common.Subject": {
+        "common.DuocSubject": {
             "type": "object",
             "properties": {
                 "codAsignatura": {
@@ -297,7 +262,7 @@ const docTemplate = `{
                 "examenes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.Grade"
+                        "$ref": "#/definitions/common.DuocGrade"
                     }
                 },
                 "nombre": {
@@ -306,7 +271,7 @@ const docTemplate = `{
                 "parciales": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.Grade"
+                        "$ref": "#/definitions/common.DuocGrade"
                     }
                 },
                 "promedio": {
@@ -314,21 +279,21 @@ const docTemplate = `{
                 }
             }
         },
-        "common.SubjectAttendance": {
+        "common.DuocSubjectAttendance": {
             "type": "object",
             "properties": {
                 "cabecera": {
-                    "$ref": "#/definitions/common.SubjectAttendanceHeader"
+                    "$ref": "#/definitions/common.DuocSubjectAttendanceHeader"
                 },
                 "detalle": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.SubjectAttendanceDetail"
+                        "$ref": "#/definitions/common.DuocSubjectAttendanceDetail"
                     }
                 }
             }
         },
-        "common.SubjectAttendanceDetail": {
+        "common.DuocSubjectAttendanceDetail": {
             "type": "object",
             "properties": {
                 "asistencia": {
@@ -339,7 +304,7 @@ const docTemplate = `{
                 }
             }
         },
-        "common.SubjectAttendanceHeader": {
+        "common.DuocSubjectAttendanceHeader": {
             "type": "object",
             "properties": {
                 "clasesAsistente": {
@@ -357,6 +322,53 @@ const docTemplate = `{
                 "porcentaje": {
                     "description": "Why...?",
                     "type": "string"
+                }
+            }
+        },
+        "common.Week": {
+            "type": "object",
+            "properties": {
+                "friday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
+                },
+                "monday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
+                },
+                "saturday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
+                },
+                "sunday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
+                },
+                "thursday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
+                },
+                "tuesday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
+                },
+                "wednesday": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Course"
+                    }
                 }
             }
         }
