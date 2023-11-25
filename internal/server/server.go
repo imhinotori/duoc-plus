@@ -74,6 +74,13 @@ func (s *Server) Run() error {
 		return new(auth.Claims)
 	})
 
+	log.Warn("SSL disabled, this is not recommended.")
+
+	s.Handlers.authHandler.Start(s.Application)
+	s.Handlers.attendanceHandler.Start(s.Application, verifyMiddleware)
+	s.Handlers.scheduleHandler.Start(s.Application, verifyMiddleware)
+	s.Handlers.gradesHandler.Start(s.Application, verifyMiddleware)
+
 	if s.Configuration.HTTP.SSL {
 		log.Info("SSL enabled.")
 
@@ -81,13 +88,6 @@ func (s *Server) Run() error {
 			return http3.ListenAndServe(addr, s.Configuration.HTTP.SSLCert, s.Configuration.HTTP.SSLKey, s.Application)
 		}), iris.WithOptimizations)
 	}
-
-	log.Warn("SSL disabled, this is not recommended.")
-
-	s.Handlers.authHandler.Start(s.Application)
-	s.Handlers.attendanceHandler.Start(s.Application, verifyMiddleware)
-	s.Handlers.scheduleHandler.Start(s.Application, verifyMiddleware)
-	s.Handlers.gradesHandler.Start(s.Application, verifyMiddleware)
 
 	return s.Application.Run(iris.Addr(addr))
 }
