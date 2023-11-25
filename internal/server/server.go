@@ -78,7 +78,7 @@ func (s *Server) Run() error {
 		log.Info("SSL enabled.")
 
 		return s.Application.Run(iris.Raw(func() error {
-			return http3.ListenAndServe(addr, s.Configuration.HTTP.SSLCert, s.Configuration.HTTP.SSLCert, s.Application)
+			return http3.ListenAndServe(addr, s.Configuration.HTTP.SSLCert, s.Configuration.HTTP.SSLKey, s.Application)
 		}), iris.WithOptimizations)
 	}
 
