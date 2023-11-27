@@ -34,7 +34,7 @@ func (h Handler) Authenticate(ctx iris.Context) {
 	var creds Credentials
 
 	if err := ctx.ReadBody(&creds); err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": "Error reading body",
 		})
 		return
@@ -42,13 +42,13 @@ func (h Handler) Authenticate(ctx iris.Context) {
 
 	tokens, err := h.Service.Authenticate(creds)
 	if err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": err.Error(),
 		})
 		return
 	}
 
-	ctx.StopWithJSON(iris.StatusOK, tokens)
+	_ = ctx.StopWithJSON(iris.StatusOK, tokens)
 }
 
 // RefreshToken
@@ -67,7 +67,7 @@ func (h Handler) RefreshToken(ctx iris.Context) {
 	}
 
 	if err := ctx.ReadBody(&data); err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": "Error reading body",
 		})
 		return
@@ -75,11 +75,11 @@ func (h Handler) RefreshToken(ctx iris.Context) {
 
 	tokens, err := h.Service.RefreshToken(claims)
 	if err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": err.Error(),
 		})
 		return
 	}
 
-	ctx.StopWithJSON(iris.StatusOK, tokens)
+	_ = ctx.StopWithJSON(iris.StatusOK, tokens)
 }

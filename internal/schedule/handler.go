@@ -34,11 +34,11 @@ func (h Handler) Schedule(ctx iris.Context) {
 
 	schedule, err := h.Service.Schedule(claims)
 	if err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": err.Error(),
 		})
 		return
 	}
 
-	ctx.StopWithJSON(iris.StatusOK, schedule)
+	_ = ctx.StopWithJSON(iris.StatusOK, schedule)
 }

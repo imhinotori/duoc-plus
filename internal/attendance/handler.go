@@ -35,12 +35,12 @@ func (h Handler) Attendance(ctx iris.Context) {
 
 	attendance, err := h.Service.Attendance(claims)
 	if err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": err.Error(),
 		})
 		log.Debug("Error getting attendance", "error", err)
 		return
 	}
 
-	ctx.StopWithJSON(iris.StatusOK, attendance)
+	_ = ctx.StopWithJSON(iris.StatusOK, attendance)
 }
