@@ -104,22 +104,22 @@ func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
 	log.Debug("Successfully got some general data", "username", credentials.Username)
 
 	claims := Claims{
-		Username:           credentials.Username,
-		Email:              strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
-		StudentCode:        responseData.CodAlumno,
-		StudentId:          responseData.IDAlumno,
-		DuocApiBearerToken: ssoResponseData.AccessToken,
+		Username:            credentials.Username,
+		Email:               strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
+		StudentCode:         responseData.CodAlumno,
+		StudentId:           responseData.IDAlumno,
+		DuocApiBearerToken:  ssoResponseData.AccessToken,
+		DuocApiRefreshToken: ssoResponseData.RefreshToken,
 	}
 
-	refreshClaims := jwt.Claims{Subject: strconv.Itoa(responseData.IDAlumno)}
+	refreshClaims := jwt.Claims{Subject: strconv.Itoa(claims.StudentId)}
 
 	log.Debug("User authenticated successfully, returning Tokens", "username", credentials.Username)
 
-	return s.Signer.NewTokenPair(claims, refreshClaims, 120*time.Hour) // TODO!
-
+	return s.GenerateTokenPair(claims, refreshClaims)
 }
 
-func (s Service) RefreshToken(claims Claims) (jwt.TokenPair, error) {
+func (s Service) RefreshToken(claims *Claims) (jwt.TokenPair, error) {
 	log.Debug("Trying to refresh user token", "username", claims.Username)
 	endpoint := "/auth/realms/WEB_APPS_PRD/protocol/openid-connect/token"
 
@@ -136,6 +136,7 @@ func (s Service) RefreshToken(claims Claims) (jwt.TokenPair, error) {
 	}
 
 	if code != iris.StatusOK {
+		log.Debug("Error refreshing user tokens", "username", claims.Username, "error", string(response), "data", data)
 		return jwt.TokenPair{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
@@ -150,5 +151,14 @@ func (s Service) RefreshToken(claims Claims) (jwt.TokenPair, error) {
 	claims.DuocApiBearerToken = ssoResponseData.AccessToken
 	claims.DuocApiRefreshToken = ssoResponseData.RefreshToken
 
-	return jwt.TokenPair{AccessToken: json.RawMessage(claims.DuocApiBearerToken), RefreshToken: json.RawMessage(claims.DuocApiRefreshToken)}, nil
+	refreshClaims := jwt.Claims{Subject: strconv.Itoa(claims.StudentId)} // Assuming StudentId is the appropriate field
+
+	log.Debug("User tokens refreshed successfully", "username", claims.Username)
+
+	return s.GenerateTokenPair(*claims, refreshClaims)
+}
+
+func (s Service) GenerateTokenPair(claims Claims, refreshClaims jwt.Claims) (jwt.TokenPair, error) {
+	log.Debug("Generating user token", "username", claims.Username)
+	return s.Signer.NewTokenPair(claims, refreshClaims, 120*time.Hour) // TODO!
 }
