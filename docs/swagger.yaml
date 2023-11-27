@@ -200,6 +200,28 @@ paths:
           description: Error reading body.
           schema:
             type: string
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh Token
+      parameters:
+      - description: Refresh token
+        in: query
+        name: refresh_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/common.AuthenticationResponse'
+        "400":
+          description: Error reading body.
+          schema:
+            type: string
   /grades:
     get:
       consumes:
