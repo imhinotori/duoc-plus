@@ -76,7 +76,7 @@ func (s *Server) Run() error {
 
 	log.Warn("SSL disabled, this is not recommended.")
 
-	s.Handlers.authHandler.Start(s.Application)
+	s.Handlers.authHandler.Start(s.Application, verifyMiddleware)
 	s.Handlers.attendanceHandler.Start(s.Application, verifyMiddleware)
 	s.Handlers.scheduleHandler.Start(s.Application, verifyMiddleware)
 	s.Handlers.gradesHandler.Start(s.Application, verifyMiddleware)
