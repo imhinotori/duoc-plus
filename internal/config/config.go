@@ -8,7 +8,9 @@ type Config struct {
 }
 
 type General struct {
-	Debug bool `koanf:"debug"`
+	Debug     bool `koanf:"debug"`
+	Cache     bool `koanf:"cache"`
+	CacheTime int  `koanf:"cache-time"`
 }
 
 type HTTP struct {
@@ -37,7 +39,9 @@ type Duoc struct {
 func Default() *Config {
 	return &Config{
 		General: General{
-			Debug: false,
+			Debug:     false,
+			Cache:     true,
+			CacheTime: 60,
 		},
 		HTTP: HTTP{
 			Address: "0.0.0.0",
