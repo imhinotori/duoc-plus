@@ -51,40 +51,33 @@ definitions:
       subject_name:
         type: string
     type: object
-  common.DuocGrade:
+  common.Grades:
     properties:
-      nota:
+      code:
         type: string
-      texto:
+      name:
         type: string
+      subjects:
+        items:
+          $ref: '#/definitions/common.Subject'
+        type: array
     type: object
-  common.DuocGradesCourses:
+  common.Subject:
     properties:
-      asignaturas:
+      average:
+        type: number
+      code:
+        type: string
+      exams:
         items:
-          $ref: '#/definitions/common.DuocSubject'
+          type: number
         type: array
-      codCarrera:
+      name:
         type: string
-      nomCarrera:
-        type: string
-    type: object
-  common.DuocSubject:
-    properties:
-      codAsignatura:
-        type: string
-      examenes:
+      partials:
         items:
-          $ref: '#/definitions/common.DuocGrade'
+          type: number
         type: array
-      nombre:
-        type: string
-      parciales:
-        items:
-          $ref: '#/definitions/common.DuocGrade'
-        type: array
-      promedio:
-        type: string
     type: object
   common.SubjectAttendance:
     properties:
@@ -227,7 +220,7 @@ paths:
         "200":
           description: Successfully retrieved grades
           schema:
-            $ref: '#/definitions/common.DuocGradesCourses'
+            $ref: '#/definitions/common.Grades'
         "400":
           description: Error getting grades.
           schema:

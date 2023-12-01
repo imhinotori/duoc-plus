@@ -147,7 +147,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved grades",
                         "schema": {
-                            "$ref": "#/definitions/common.DuocGradesCourses"
+                            "$ref": "#/definitions/common.Grades"
                         }
                     },
                     "400": {
@@ -270,57 +270,46 @@ const docTemplate = `{
                 }
             }
         },
-        "common.DuocGrade": {
+        "common.Grades": {
             "type": "object",
             "properties": {
-                "nota": {
+                "code": {
                     "type": "string"
                 },
-                "texto": {
+                "name": {
                     "type": "string"
+                },
+                "subjects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Subject"
+                    }
                 }
             }
         },
-        "common.DuocGradesCourses": {
+        "common.Subject": {
             "type": "object",
             "properties": {
-                "asignaturas": {
+                "average": {
+                    "type": "number"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "exams": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.DuocSubject"
+                        "type": "number"
                     }
                 },
-                "codCarrera": {
+                "name": {
                     "type": "string"
                 },
-                "nomCarrera": {
-                    "type": "string"
-                }
-            }
-        },
-        "common.DuocSubject": {
-            "type": "object",
-            "properties": {
-                "codAsignatura": {
-                    "type": "string"
-                },
-                "examenes": {
+                "partials": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.DuocGrade"
+                        "type": "number"
                     }
-                },
-                "nombre": {
-                    "type": "string"
-                },
-                "parciales": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.DuocGrade"
-                    }
-                },
-                "promedio": {
-                    "type": "string"
                 }
             }
         },
