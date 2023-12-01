@@ -1,5 +1,23 @@
 basePath: /
 definitions:
+  common.Attendance:
+    properties:
+      attendance:
+        items:
+          $ref: '#/definitions/common.SubjectAttendance'
+        type: array
+      degree_code:
+        type: string
+      degree_name:
+        type: string
+    type: object
+  common.AttendanceDetail:
+    properties:
+      attendance:
+        type: integer
+      date:
+        type: string
+    type: object
   common.AuthenticationResponse:
     properties:
       access_token:
@@ -31,17 +49,6 @@ definitions:
       subject_code:
         type: string
       subject_name:
-        type: string
-    type: object
-  common.DuocAttendance:
-    properties:
-      asistenciaAsignaturas:
-        items:
-          $ref: '#/definitions/common.DuocSubjectAttendance'
-        type: array
-      codCarrera:
-        type: string
-      nomCarrera:
         type: string
     type: object
   common.DuocGrade:
@@ -79,35 +86,22 @@ definitions:
       promedio:
         type: string
     type: object
-  common.DuocSubjectAttendance:
+  common.SubjectAttendance:
     properties:
-      cabecera:
-        $ref: '#/definitions/common.DuocSubjectAttendanceHeader'
-      detalle:
+      assisted_classes:
+        type: integer
+      classes_held:
+        type: integer
+      code:
+        type: string
+      details:
         items:
-          $ref: '#/definitions/common.DuocSubjectAttendanceDetail'
+          $ref: '#/definitions/common.AttendanceDetail'
         type: array
-    type: object
-  common.DuocSubjectAttendanceDetail:
-    properties:
-      asistencia:
+      name:
         type: string
-      fechaLarga:
-        type: string
-    type: object
-  common.DuocSubjectAttendanceHeader:
-    properties:
-      clasesAsistente:
-        type: string
-      clasesRealizadas:
-        type: string
-      codAsignatura:
-        type: string
-      nomAsignatura:
-        type: string
-      porcentaje:
-        description: Why...?
-        type: string
+      percentage:
+        type: number
     type: object
   common.Week:
     properties:
@@ -166,7 +160,7 @@ paths:
         "200":
           description: Successfully retrieved attendance
           schema:
-            $ref: '#/definitions/common.DuocAttendance'
+            $ref: '#/definitions/common.Attendance'
         "400":
           description: Error getting attendance.
           schema:

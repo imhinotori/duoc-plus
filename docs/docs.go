@@ -42,7 +42,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved attendance",
                         "schema": {
-                            "$ref": "#/definitions/common.DuocAttendance"
+                            "$ref": "#/definitions/common.Attendance"
                         }
                     },
                     "400": {
@@ -191,6 +191,34 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "common.Attendance": {
+            "type": "object",
+            "properties": {
+                "attendance": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.SubjectAttendance"
+                    }
+                },
+                "degree_code": {
+                    "type": "string"
+                },
+                "degree_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.AttendanceDetail": {
+            "type": "object",
+            "properties": {
+                "attendance": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                }
+            }
+        },
         "common.AuthenticationResponse": {
             "type": "object",
             "properties": {
@@ -238,23 +266,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "subject_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "common.DuocAttendance": {
-            "type": "object",
-            "properties": {
-                "asistenciaAsignaturas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.DuocSubjectAttendance"
-                    }
-                },
-                "codCarrera": {
-                    "type": "string"
-                },
-                "nomCarrera": {
                     "type": "string"
                 }
             }
@@ -313,49 +324,29 @@ const docTemplate = `{
                 }
             }
         },
-        "common.DuocSubjectAttendance": {
+        "common.SubjectAttendance": {
             "type": "object",
             "properties": {
-                "cabecera": {
-                    "$ref": "#/definitions/common.DuocSubjectAttendanceHeader"
+                "assisted_classes": {
+                    "type": "integer"
                 },
-                "detalle": {
+                "classes_held": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "details": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.DuocSubjectAttendanceDetail"
+                        "$ref": "#/definitions/common.AttendanceDetail"
                     }
-                }
-            }
-        },
-        "common.DuocSubjectAttendanceDetail": {
-            "type": "object",
-            "properties": {
-                "asistencia": {
+                },
+                "name": {
                     "type": "string"
                 },
-                "fechaLarga": {
-                    "type": "string"
-                }
-            }
-        },
-        "common.DuocSubjectAttendanceHeader": {
-            "type": "object",
-            "properties": {
-                "clasesAsistente": {
-                    "type": "string"
-                },
-                "clasesRealizadas": {
-                    "type": "string"
-                },
-                "codAsignatura": {
-                    "type": "string"
-                },
-                "nomAsignatura": {
-                    "type": "string"
-                },
-                "porcentaje": {
-                    "description": "Why...?",
-                    "type": "string"
+                "percentage": {
+                    "type": "number"
                 }
             }
         },
