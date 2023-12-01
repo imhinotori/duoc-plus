@@ -27,7 +27,7 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 // @Accept  json
 // @Produce  json
 // @Security Bearer
-// @Success 200 {object} common.DuocAttendance	"Successfully retrieved attendance"
+// @Success 200 {object} common.Attendance	"Successfully retrieved attendance"
 // @Failure 400 {string} string "Error getting attendance."
 // @Router /attendance [get]
 func (h Handler) Attendance(ctx iris.Context) {
