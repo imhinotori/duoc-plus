@@ -4,8 +4,10 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/cache"
 	"github.com/kataras/iris/v12/context"
 	"github.com/kataras/iris/v12/middleware/jwt"
+	"time"
 )
 
 type Provider interface {
@@ -18,6 +20,9 @@ type Handler struct {
 
 func (h Handler) Start(app *iris.Application, verificationMiddleware context.Handler) {
 	party := app.Party("/attendance")
+	if h.Service.Config.General.Cache {
+		party.Use(cache.Handler(time.Duration(h.Service.Config.General.CacheTime) * time.Second))
+	}
 	party.Use(verificationMiddleware)
 	party.Get("/", h.Attendance)
 }
