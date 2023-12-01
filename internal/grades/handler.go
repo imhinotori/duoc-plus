@@ -27,20 +27,20 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 // @Accept  json
 // @Produce  json
 // @Security Bearer
-// @Success 200 {object} common.DuocGradesCourses	"Successfully retrieved grades"
+// @Success 200 {object} common.Grades	"Successfully retrieved grades"
 // @Failure 400 {string} string "Error getting grades."
 // @Router /grades [get]
 func (h Handler) Grades(ctx iris.Context) {
 	claims := jwt.Get(ctx).(*auth.Claims)
 
-	attendance, err := h.Service.Grades(claims)
+	grades, err := h.Service.Grades(claims)
 	if err != nil {
 		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
 			"message": err.Error(),
 		})
-		log.Debug("Error getting attendance", "error", err)
+		log.Debug("Error getting grades", "error", err)
 		return
 	}
 
-	_ = ctx.StopWithJSON(iris.StatusOK, attendance)
+	_ = ctx.StopWithJSON(iris.StatusOK, grades)
 }
