@@ -8,10 +8,10 @@ import (
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
+	"github.com/imhinotori/duoc-plus/internal/helper"
 	"github.com/kataras/iris/v12"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -94,9 +94,9 @@ func convertDuocAttendanceToAttendance(original common.DuocAttendance) common.At
 			newSubjectAttendance := common.SubjectAttendance{
 				Name:            subjectAttendance.Header.SubjectName,
 				Code:            subjectAttendance.Header.SubjectCode,
-				ClassesHeld:     convertToInt(subjectAttendance.Header.ClassesHeld),
-				AssistedClasses: convertToInt(subjectAttendance.Header.AssistedClasses),
-				Percentage:      convertToFloat64(subjectAttendance.Header.Percentage),
+				ClassesHeld:     helper.ConvertToInt(subjectAttendance.Header.ClassesHeld),
+				AssistedClasses: helper.ConvertToInt(subjectAttendance.Header.AssistedClasses),
+				Percentage:      helper.ConvertToFloat64(subjectAttendance.Header.Percentage),
 			}
 
 			for _, detail := range subjectAttendance.Details {
@@ -108,7 +108,7 @@ func convertDuocAttendanceToAttendance(original common.DuocAttendance) common.At
 
 				newSubjectAttendance.Details = append(newSubjectAttendance.Details, common.AttendanceDetail{
 					Date:       date,
-					Attendance: convertToInt(detail.Attendance),
+					Attendance: helper.ConvertToInt(detail.Attendance),
 				})
 			}
 
@@ -120,22 +120,6 @@ func convertDuocAttendanceToAttendance(original common.DuocAttendance) common.At
 
 	wg.Wait()
 	return attendance
-}
-
-func convertToInt(value string) int {
-	result, err := strconv.Atoi(value)
-	if err != nil {
-		return 0
-	}
-	return result
-}
-
-func convertToFloat64(value string) float64 {
-	result, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return 0.0
-	}
-	return result
 }
 
 func convertDuocDateToDate(originalDate string) (time.Time, error) {
