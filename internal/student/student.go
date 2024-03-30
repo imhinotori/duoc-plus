@@ -1,6 +1,7 @@
 package student
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/charmbracelet/log"
@@ -11,6 +12,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type Service struct {
@@ -50,7 +52,7 @@ func (s Service) StudentData(claims *auth.Claims) (common.User, error) {
 
 	log.Debug("Converting student data to new format", "username", claims.Username)
 
-	returnData, err := convertDuocStudentDataToStudentData(responseData)
+	returnData, err := s.convertDuocStudentDataToStudentData(responseData, claims)
 	if err != nil {
 		return common.User{}, err
 	}
@@ -58,12 +60,19 @@ func (s Service) StudentData(claims *auth.Claims) (common.User, error) {
 	return returnData, nil
 }
 
-func convertDuocStudentDataToStudentData(original common.DuocStudentData) (common.User, error) {
+func (s Service) convertDuocStudentDataToStudentData(original common.DuocStudentData, claims *auth.Claims) (common.User, error) {
+	var avatar string
+
+	if original.Avatar != "" {
+		avatar = original.Avatar
+	} else {
+		avatar = fmt.Sprintf("https://www.gravatar.com/avatar/%x", sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(claims.Email)))))
+	}
 
 	NewStudentData := common.User{
 		FullName: original.NombreCompleto,
 		Rut:      original.Rut,
-		Avatar:   original.Avatar, // TODO: Add Gravatar support.
+		Avatar:   avatar,
 	}
 
 	careers := make([]common.Career, 0, len(original.Carreras))
