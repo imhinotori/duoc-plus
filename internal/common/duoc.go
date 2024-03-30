@@ -75,3 +75,16 @@ type DuocSchedule struct {
 	NameCareer string    `json:"nomCarrera"`
 	Days       []DuocDay `json:"dias"`
 }
+
+// Student Data
+type DuocStudentData struct {
+	NombreCompleto string `json:"nombreCompleto"`
+	Rut            string `json:"rut"`
+	Avatar         string `json:"avatar"`
+	Carreras       []struct {
+		Escuela    string `json:"escuela"`
+		NomCarrera string `json:"nomCarrera"`
+		CodCarrera string `json:"codCarrera"`
+		Sede       string `json:"sede"`
+	} `json:"carreras"`
+}
