@@ -1,5 +1,7 @@
 package config
 
+import "github.com/imhinotori/duoc-plus/internal/envutil"
+
 type Config struct {
 	General General `koanf:"general"`
 	HTTP    HTTP    `koanf:"http"`
@@ -36,34 +38,30 @@ type Duoc struct {
 	GrantType    string `koanf:"grant-type"`
 }
 
-func Default() *Config {
+func LoadFromEnvironment() *Config {
 	return &Config{
 		General: General{
-			Debug:     false,
-			Cache:     true,
-			CacheTime: 60,
+			Debug:     envutil.GetEnvBool("debug_mode"),
+			Cache:     !envutil.GetEnvBool("cache_disabled"),
+			CacheTime: envutil.GetEnvInt("cache_time", 60),
 		},
 		HTTP: HTTP{
-			Address: "0.0.0.0",
-			Port:    80,
-			SSL:     false,
+			Address: envutil.GetEnv("address", "0.0.0.0"),
+			Port:    envutil.GetEnvInt("port", 80),
+			SSL:     envutil.GetEnvBool("ssl_enabled"),
 		},
 		JWT: JWT{
-			PrivateKey:   "./data/private.pem",
-			PublicKey:    "./data/public.pem",
-			AutoGenerate: true,
+			PrivateKey:   envutil.GetEnv("jwt_private_key", "./private.pem"),
+			PublicKey:    envutil.GetEnv("jwt_public_key", "./public.pem"),
+			AutoGenerate: envutil.GetEnvBool("jwt_auto_generate"),
+		},
+		Duoc: Duoc{
+			SSOURL:       envutil.GetEnv("duoc_sso_url", "duoc_sso_url"),
+			MobileAPIUrl: envutil.GetEnv("duoc_mobile_api_url", "duoc_mobile_api_url"),
+			WebAPIUrl:    envutil.GetEnv("duoc_web_api_url", "duoc_web_api_url"),
+			ClientSecret: envutil.GetEnv("duoc_client_secret", "secret"),
+			ClientId:     envutil.GetEnv("duoc_client_id", "client"),
+			GrantType:    envutil.GetEnv("duoc_grant_type", "password"),
 		},
 	}
-}
-
-func Apply(cfg *Config, opts ...Option) *Config {
-	for _, op := range opts {
-		cfg = op(cfg)
-	}
-
-	return cfg
-}
-
-func Build(opts ...Option) *Config {
-	return Apply(Default(), opts...)
 }

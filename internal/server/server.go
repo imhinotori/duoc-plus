@@ -31,9 +31,7 @@ type Handlers struct {
 	gradesHandler     grades.Handler
 }
 
-func New(cfgOpts ...config.Option) (*Server, error) {
-	cfg := config.Build(cfgOpts...)
-
+func New(cfg *config.Config) (*Server, error) {
 	app := iris.Default()
 
 	if cfg.General.Debug {
