@@ -8,6 +8,7 @@ import (
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"github.com/imhinotori/duoc-plus/internal/grades"
 	"github.com/imhinotori/duoc-plus/internal/schedule"
+	"github.com/imhinotori/duoc-plus/internal/student"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/quic-go/quic-go/http3"
@@ -29,6 +30,7 @@ type Handlers struct {
 	attendanceHandler attendance.Handler
 	scheduleHandler   schedule.Handler
 	gradesHandler     grades.Handler
+	studentHandler    student.Handler
 }
 
 func New(cfg *config.Config) (*Server, error) {
@@ -61,6 +63,7 @@ func New(cfg *config.Config) (*Server, error) {
 	server.Handlers.attendanceHandler = attendance.Handler{Service: attendance.New(cfg, server.Duoc)}
 	server.Handlers.scheduleHandler = schedule.Handler{Service: schedule.New(cfg, server.Duoc)}
 	server.Handlers.gradesHandler = grades.Handler{Service: grades.New(cfg, server.Duoc)}
+	server.Handlers.studentHandler = student.Handler{Service: student.New(cfg, server.Duoc)}
 
 	return server, nil
 }
@@ -78,6 +81,7 @@ func (s *Server) Run() error {
 	s.Handlers.attendanceHandler.Start(s.Application, verifyMiddleware)
 	s.Handlers.scheduleHandler.Start(s.Application, verifyMiddleware)
 	s.Handlers.gradesHandler.Start(s.Application, verifyMiddleware)
+	s.Handlers.studentHandler.Start(s.Application, verifyMiddleware)
 
 	handleSwagger(s)
 
