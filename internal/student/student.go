@@ -4,12 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
-	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
-	"github.com/kataras/iris/v12"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -27,20 +27,20 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) StudentData(claims *auth.Claims) (common.User, error) {
+func (s Service) StudentData(claims jwt.MapClaims) (common.User, error) {
 	endpoint := "/credencial-virtual_v1.0/v1/datosAlumno"
 
 	query := url.Values{}
-	query.Set("alumnoId", strconv.Itoa(claims.StudentId))
+	query.Set("alumnoId", strconv.Itoa(int(claims["student_id"].(float64))))
 
-	log.Debug("Getting student data", "studentId", claims.StudentId)
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
+	log.Debug("Getting student data", "studentId", claims["student_id"])
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
 
 	if err != nil {
 		return common.User{}, err
 	}
 
-	if code != iris.StatusOK {
+	if code != http.StatusOK {
 		return common.User{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
@@ -50,7 +50,7 @@ func (s Service) StudentData(claims *auth.Claims) (common.User, error) {
 		return common.User{}, err
 	}
 
-	log.Debug("Converting student data to new format", "username", claims.Username)
+	log.Debug("Converting student data to new format", "username", claims["username"].(string))
 
 	returnData, err := s.convertDuocStudentDataToStudentData(responseData, claims)
 	if err != nil {
@@ -60,13 +60,13 @@ func (s Service) StudentData(claims *auth.Claims) (common.User, error) {
 	return returnData, nil
 }
 
-func (s Service) convertDuocStudentDataToStudentData(original common.DuocStudentData, claims *auth.Claims) (common.User, error) {
+func (s Service) convertDuocStudentDataToStudentData(original common.DuocStudentData, claims jwt.MapClaims) (common.User, error) {
 	var avatar string
 
 	if original.Avatar != "" {
 		avatar = original.Avatar
 	} else {
-		avatar = fmt.Sprintf("https://www.gravatar.com/avatar/%x", sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(claims.Email)))))
+		avatar = fmt.Sprintf("https://www.gravatar.com/avatar/%x", sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(claims["email"].(string))))))
 	}
 
 	NewStudentData := common.User{

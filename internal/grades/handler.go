@@ -1,30 +1,37 @@
 package grades
 
 import (
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
+	"github.com/gin-gonic/gin"
 	"github.com/imhinotori/duoc-plus/internal/auth"
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/cache"
-	"github.com/kataras/iris/v12/context"
-	"github.com/kataras/iris/v12/middleware/jwt"
+	"net/http"
 	"time"
 )
 
 type Provider interface {
-	Attendance(ctx iris.Context)
+	Attendance(ctx *gin.Context)
 }
 
 type Handler struct {
 	Service *Service
 }
 
-func (h Handler) Start(app *iris.Application, verificationMiddleware context.Handler) {
-	party := app.Party("/grades")
-	if h.Service.Config.General.Cache {
-		party.Use(cache.Handler(time.Duration(h.Service.Config.General.CacheTime) * time.Second))
+func (h Handler) Start(app *gin.Engine, authService *auth.Service, storage ...persistence.CacheStore) {
+	party := app.Group("/grades")
+	party.Use(authService.AuthMiddleware.MiddlewareFunc())
+	{
+		if storage != nil && storage[0] != nil {
+			party.GET("/", cache.CachePage(storage[0], time.Minute, func(c *gin.Context) {
+				h.Grades(c)
+			}))
+		} else {
+			party.GET("/", h.Grades)
+		}
 	}
-	party.Use(verificationMiddleware)
-	party.Get("/", h.Grades)
+
 }
 
 // Grades
@@ -35,17 +42,17 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 // @Success 200 {object} common.Grades	"Successfully retrieved grades"
 // @Failure 400 {string} string "Error getting grades."
 // @Router /grades [get]
-func (h Handler) Grades(ctx iris.Context) {
-	claims := jwt.Get(ctx).(*auth.Claims)
+func (h Handler) Grades(ctx *gin.Context) {
+	claims := jwt.ExtractClaims(ctx)
 
 	grades, err := h.Service.Grades(claims)
 	if err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
 		log.Debug("Error getting grades", "error", err)
 		return
 	}
 
-	_ = ctx.StopWithJSON(iris.StatusOK, grades)
+	ctx.JSON(http.StatusOK, grades)
 }

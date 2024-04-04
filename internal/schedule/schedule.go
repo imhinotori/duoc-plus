@@ -3,14 +3,14 @@ package schedule
 import (
 	"encoding/json"
 	"fmt"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
-	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
-	"github.com/kataras/iris/v12"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -28,19 +28,19 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Schedule(claims *auth.Claims) ([]common.CareerSchedule, error) {
+func (s Service) Schedule(claims jwt.MapClaims) ([]common.CareerSchedule, error) {
 	endpoint := "/horario_v1.0/v1/horario"
 
 	query := url.Values{}
-	query.Set("alumnoId", strconv.Itoa(claims.StudentId))
+	query.Set("alumnoId", strconv.Itoa(int(claims["student_id"].(float64))))
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
 
 	if err != nil {
 		return []common.CareerSchedule{}, err
 	}
 
-	if code != iris.StatusOK {
+	if code != http.StatusOK {
 		return []common.CareerSchedule{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
@@ -50,7 +50,7 @@ func (s Service) Schedule(claims *auth.Claims) ([]common.CareerSchedule, error) 
 		return []common.CareerSchedule{}, err
 	}
 
-	log.Debug("Getting schedule data", "username", claims.Username)
+	log.Debug("Getting schedule data", "username", claims["username"].(string))
 
 	caser := cases.Title(language.LatinAmericanSpanish)
 	schedule := convertDuocScheduleToSchedule(responseData, caser)

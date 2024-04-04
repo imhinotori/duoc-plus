@@ -3,13 +3,13 @@ package attendance
 import (
 	"encoding/json"
 	"fmt"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
-	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"github.com/imhinotori/duoc-plus/internal/helper"
-	"github.com/kataras/iris/v12"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -44,19 +44,19 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Attendance(claims *auth.Claims) ([]common.Attendance, error) {
+func (s Service) Attendance(claims jwt.MapClaims) ([]common.Attendance, error) {
 	endpoint := "/asistencia_v1.0/v1/asistenciaCompleta"
 
 	query := url.Values{}
-	query.Set("codAlumno", claims.StudentCode)
+	query.Set("codAlumno", claims["student_code"].(string))
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
 
 	if err != nil {
 		return []common.Attendance{}, err
 	}
 
-	if code != iris.StatusOK {
+	if code != http.StatusOK {
 		return []common.Attendance{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
@@ -66,7 +66,7 @@ func (s Service) Attendance(claims *auth.Claims) ([]common.Attendance, error) {
 		return []common.Attendance{}, err
 	}
 
-	log.Debug("Getting attendance data", "username", claims.Username)
+	log.Debug("Getting attendance data", "username", claims["username"].(string))
 
 	returnData := make([]common.Attendance, len(responseData))
 

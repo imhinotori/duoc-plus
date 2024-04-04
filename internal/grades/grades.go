@@ -3,13 +3,13 @@ package grades
 import (
 	"encoding/json"
 	"fmt"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
-	"github.com/imhinotori/duoc-plus/internal/auth"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"github.com/imhinotori/duoc-plus/internal/helper"
-	"github.com/kataras/iris/v12"
+	"net/http"
 	"net/url"
 )
 
@@ -25,19 +25,19 @@ func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	}
 }
 
-func (s Service) Grades(claims *auth.Claims) ([]common.Grades, error) {
+func (s Service) Grades(claims jwt.MapClaims) ([]common.Grades, error) {
 	endpoint := "/notas_v1.0/v1/notasAlumno"
 
 	query := url.Values{}
-	query.Set("codAlumno", claims.StudentCode)
+	query.Set("codAlumno", claims["student_code"].(string))
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims.DuocApiBearerToken)
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
 
 	if err != nil {
 		return []common.Grades{}, err
 	}
 
-	if code != iris.StatusOK {
+	if code != http.StatusOK {
 		return []common.Grades{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
@@ -47,14 +47,14 @@ func (s Service) Grades(claims *auth.Claims) ([]common.Grades, error) {
 		return []common.Grades{}, err
 	}
 
-	log.Debug("Getting grades data", "username", claims.Username)
+	log.Debug("Getting grades data", "username", claims["username"])
 
 	grades := make([]common.Grades, 0, len(responseData))
 
 	for i, data := range responseData {
 		grades = append(grades, convertDuocGradesToGrades(data))
 
-		log.Debug("Getting grades data", "username", claims.Username, "course", i, "courseName", data.DegreeName)
+		log.Debug("Getting grades data", "username", claims["username"], "course", i, "courseName", data.DegreeName)
 	}
 
 	return grades, nil

@@ -1,29 +1,36 @@
 package schedule
 
 import (
+	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
+	"github.com/gin-gonic/gin"
 	"github.com/imhinotori/duoc-plus/internal/auth"
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/cache"
-	"github.com/kataras/iris/v12/context"
-	"github.com/kataras/iris/v12/middleware/jwt"
+	"net/http"
 	"time"
 )
 
 type Provider interface {
-	Schedule(ctx iris.Context)
+	Schedule(ctx *gin.Context)
 }
 
 type Handler struct {
 	Service *Service
 }
 
-func (h Handler) Start(app *iris.Application, verificationMiddleware context.Handler) {
-	party := app.Party("/schedule")
-	if h.Service.Config.General.Cache {
-		party.Use(cache.Handler(time.Duration(h.Service.Config.General.CacheTime) * time.Second))
+func (h Handler) Start(app *gin.Engine, authService *auth.Service, storage ...persistence.CacheStore) {
+	party := app.Group("/schedule")
+	party.Use(authService.AuthMiddleware.MiddlewareFunc())
+	{
+		if storage != nil && storage[0] != nil {
+			party.GET("/", cache.CachePage(storage[0], time.Minute, func(c *gin.Context) {
+				h.Schedule(c)
+			}))
+		} else {
+			party.GET("/", h.Schedule)
+		}
 	}
-	party.Use(verificationMiddleware)
-	party.Get("/", h.Schedule)
+
 }
 
 // Schedule
@@ -34,16 +41,16 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 // @Success 200 {object} common.CareerSchedule	"Successfully retrieved schedule"
 // @Failure 400 {string} string "Error getting schedule."
 // @Router /schedule [get]
-func (h Handler) Schedule(ctx iris.Context) {
-	claims := jwt.Get(ctx).(*auth.Claims)
+func (h Handler) Schedule(ctx *gin.Context) {
+	claims := jwt.ExtractClaims(ctx)
 
 	schedule, err := h.Service.Schedule(claims)
 	if err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
 
-	_ = ctx.StopWithJSON(iris.StatusOK, schedule)
+	ctx.JSON(http.StatusOK, schedule)
 }

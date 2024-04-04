@@ -1,30 +1,37 @@
 package student
 
 import (
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
+	"github.com/gin-gonic/gin"
 	"github.com/imhinotori/duoc-plus/internal/auth"
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/cache"
-	"github.com/kataras/iris/v12/context"
-	"github.com/kataras/iris/v12/middleware/jwt"
+	"net/http"
 	"time"
 )
 
 type Provider interface {
-	StudentData(ctx iris.Context)
+	StudentData(ctx *gin.Context)
 }
 
 type Handler struct {
 	Service *Service
 }
 
-func (h Handler) Start(app *iris.Application, verificationMiddleware context.Handler) {
-	party := app.Party("/student")
-	if h.Service.Config.General.Cache {
-		party.Use(cache.Handler(time.Duration(h.Service.Config.General.CacheTime) * time.Second))
+func (h Handler) Start(app *gin.Engine, authService *auth.Service, storage ...persistence.CacheStore) {
+	party := app.Group("/student")
+	party.Use(authService.AuthMiddleware.MiddlewareFunc())
+	{
+		if storage != nil && storage[0] != nil {
+			party.GET("/", cache.CachePage(storage[0], time.Minute, func(c *gin.Context) {
+				h.StudentData(c)
+			}))
+		} else {
+			party.GET("/", h.StudentData)
+		}
 	}
-	party.Use(verificationMiddleware)
-	party.Get("/", h.StudentData)
+
 }
 
 // StudentData
@@ -35,17 +42,17 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 // @Success 200 {object} common.User	"Successfully retrieved student information"
 // @Failure 400 {string} string "Error getting student information."
 // @Router /student [get]
-func (h Handler) StudentData(ctx iris.Context) {
-	claims := jwt.Get(ctx).(*auth.Claims)
+func (h Handler) StudentData(ctx *gin.Context) {
+	claims := jwt.ExtractClaims(ctx)
 
 	studentData, err := h.Service.StudentData(claims)
 	if err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
 		log.Debug("Error getting student data", "error", err)
 		return
 	}
 
-	_ = ctx.StopWithJSON(iris.StatusOK, studentData)
+	ctx.JSON(http.StatusOK, studentData)
 }

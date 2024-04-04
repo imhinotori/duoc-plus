@@ -1,24 +1,23 @@
 package auth
 
 import (
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/context"
-	"github.com/kataras/iris/v12/middleware/jwt"
+	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type Provider interface {
-	Authenticate(ctx iris.Context)
-	RefreshToken(ctx iris.Context)
+	Authenticate(ctx *gin.Context)
+	RefreshToken(ctx *gin.Context)
 }
 
 type Handler struct {
 	Service *Service
 }
 
-func (h Handler) Start(app *iris.Application, verificationMiddleware context.Handler) {
-	party := app.Party("/auth")
-	party.Post("/", h.Authenticate)
-	party.Post("/refresh", h.RefreshToken).Use(verificationMiddleware)
+func (h Handler) Start(app *gin.Engine) {
+	app.POST("/login", h.Service.AuthMiddleware.LoginHandler)
+	party := app.Group("/auth")
+	party.GET("/refresh_token", h.Service.AuthMiddleware.RefreshHandler)
 }
 
 // Authenticate
@@ -30,56 +29,24 @@ func (h Handler) Start(app *iris.Application, verificationMiddleware context.Han
 // @Success 200 {object} common.AuthenticationResponse	"ok"
 // @Failure 400 {object} string "Error reading body."
 // @Router /auth [post]
-func (h Handler) Authenticate(ctx iris.Context) {
+func (h Handler) Authenticate(ctx *gin.Context) {
 	var creds Credentials
 
-	if err := ctx.ReadBody(&creds); err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+	if err := ctx.Bind(&creds); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "Error reading body",
 		})
 		return
+
 	}
 
 	tokens, err := h.Service.Authenticate(creds)
 	if err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
 
-	_ = ctx.StopWithJSON(iris.StatusOK, tokens)
-}
-
-// RefreshToken
-// @Description Refresh Token
-// @Accept  json
-// @Produce  json
-// @Param   refresh_token     query    string     true        "Refresh token"
-// @Success 200 {object} common.AuthenticationResponse	"ok"
-// @Failure 400 {object} string "Error reading body."
-// @Router /auth/refresh [post]
-func (h Handler) RefreshToken(ctx iris.Context) {
-	claims := jwt.Get(ctx).(*Claims)
-
-	var data struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-
-	if err := ctx.ReadBody(&data); err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
-			"message": "Error reading body",
-		})
-		return
-	}
-
-	tokens, err := h.Service.RefreshToken(claims)
-	if err != nil {
-		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	_ = ctx.StopWithJSON(iris.StatusOK, tokens)
+	ctx.JSON(http.StatusOK, tokens)
 }

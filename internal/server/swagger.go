@@ -7,12 +7,12 @@ import (
 )
 
 func handleSwagger(s *Server) {
-	swaggerUI := swagger.Handler(swaggerFiles.Handler,
+	_ = swagger.Handler(swaggerFiles.Handler,
 		swagger.URL("/swagger/swagger.json"),
 		swagger.DeepLinking(true),
 		swagger.Prefix("/swagger"),
 	)
 
-	s.Application.Get("/swagger", swaggerUI)
-	s.Application.Get("/swagger/{any:path}", swaggerUI)
+	//s.Application.GET("/swagger", swaggerUI)
+	//s.Application.GET("/swagger/{any:path}", swaggerUI)
 }

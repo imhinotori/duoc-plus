@@ -3,31 +3,102 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
+	"github.com/gin-gonic/gin"
+	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/middleware/jwt"
+	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
 
 type Service struct {
-	Config   *config.Config
-	Signer   *jwt.Signer
-	Verifier *jwt.Verifier
-	Duoc     *duoc.Client
+	Config         *config.Config
+	Duoc           *duoc.Client
+	AuthMiddleware *jwt.GinJWTMiddleware
 }
 
-func New(cfg *config.Config, signer *jwt.Signer, verifier *jwt.Verifier, duoc *duoc.Client) *Service {
-	return &Service{
-		Config:   cfg,
-		Signer:   signer,
-		Verifier: verifier,
-		Duoc:     duoc,
+func New(cfg *config.Config, duoc *duoc.Client) *Service {
+	service := &Service{
+		Config: cfg,
+		Duoc:   duoc,
 	}
+
+	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
+		Realm:       "Duoc UC",
+		Key:         []byte(cfg.JWT.Key),
+		Timeout:     time.Hour * 5,
+		MaxRefresh:  time.Hour * 10,
+		IdentityKey: jwt.IdentityKey,
+		PayloadFunc: func(data interface{}) jwt.MapClaims {
+			if v, ok := data.(*common.User); ok {
+				return jwt.MapClaims{
+					jwt.IdentityKey: v.Username,
+					"username":      v.Username,
+					"email":         v.Email,
+					"student_code":  v.StudentCode,
+					"student_id":    v.StudentId,
+					"api_bearer":    v.AccessToken,
+					"refresh_token": v.RefreshToken,
+				}
+			}
+			return jwt.MapClaims{}
+		},
+		IdentityHandler: func(c *gin.Context) interface{} {
+			claims := jwt.ExtractClaims(c)
+			log.Debug("Extracting claims", "claims", claims)
+			return &common.User{
+				Username: claims[jwt.IdentityKey].(string),
+			}
+		},
+		Authenticator: func(c *gin.Context) (interface{}, error) {
+			log.Debug("Authenticating user")
+			var creds Credentials
+			if err := c.ShouldBind(&creds); err != nil {
+				return nil, jwt.ErrMissingLoginValues
+			}
+
+			if usr, err := service.Authenticate(creds); err == nil && usr != nil {
+				return usr, nil
+			}
+
+			return nil, jwt.ErrFailedAuthentication
+		},
+		Authorizator: func(data interface{}, c *gin.Context) bool {
+			if _, ok := data.(*common.User); ok {
+				return true
+			}
+
+			return false
+		},
+		Unauthorized: func(c *gin.Context, code int, message string) {
+			c.JSON(code, gin.H{
+				"code":    code,
+				"message": message,
+			})
+		},
+		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
+		TokenHeadName: "Bearer",
+		TimeFunc:      time.Now,
+	})
+
+	if err != nil {
+		log.Errorf("Error creating auth middleware: %s", err)
+		return nil
+	}
+
+	errInit := authMiddleware.MiddlewareInit()
+	if errInit != nil {
+		log.Errorf("Error initializing auth middleware: %s", errInit)
+		return nil
+	}
+
+	service.AuthMiddleware = authMiddleware
+
+	return service
 }
 
 type Credentials struct {
@@ -35,16 +106,7 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-type Claims struct {
-	Username            string `json:"username"`
-	Email               string `json:"email"`     // Its username + @duocuc.cl
-	StudentCode         string `json:"codAlumno"` // It's probably an int, but well.
-	StudentId           int    `json:"idAlumno"`  // Why two ids (?) I don't know.
-	DuocApiBearerToken  string `json:"api_bearer"`
-	DuocApiRefreshToken string `json:"refresh_token"`
-}
-
-func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
+func (s Service) Authenticate(credentials Credentials) (*common.User, error) {
 	log.Debug("Trying to authenticate user", "username", credentials.Username)
 	endpoint := "/auth/realms/WEB_APPS_PRD/protocol/openid-connect/token"
 
@@ -58,17 +120,17 @@ func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
 	response, code, err := s.Duoc.Request(s.Config.Duoc.SSOURL+endpoint, "POST", []byte(data.Encode()), nil)
 
 	if err != nil {
-		return jwt.TokenPair{}, err
+		return nil, err
 	}
 
-	if code != iris.StatusOK {
-		return jwt.TokenPair{}, fmt.Errorf("invalid response structure: %s", string(response))
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
 	var ssoResponseData ssoAuthResponse
 
 	if err2 := json.Unmarshal(response, &ssoResponseData); err2 != nil {
-		return jwt.TokenPair{}, err2
+		return nil, err2
 	}
 
 	log.Debug("Successfully authenticated User, Getting some general data", "username", credentials.Username)
@@ -83,11 +145,11 @@ func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
 	response, code, err = s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, ssoResponseData.AccessToken)
 
 	if err != nil {
-		return jwt.TokenPair{}, err
+		return nil, err
 	}
 
-	if code != iris.StatusOK {
-		return jwt.TokenPair{}, fmt.Errorf("invalid response structure: %s", string(response))
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
 	var responseData struct {
@@ -98,67 +160,20 @@ func (s Service) Authenticate(credentials Credentials) (jwt.TokenPair, error) {
 	}
 
 	if err2 := json.Unmarshal(response, &responseData); err2 != nil {
-		return jwt.TokenPair{}, err2
+		return nil, err2
 	}
 
 	log.Debug("Successfully got some general data", "username", credentials.Username)
 
-	claims := Claims{
-		Username:            credentials.Username,
-		Email:               strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
-		StudentCode:         responseData.CodAlumno,
-		StudentId:           responseData.IDAlumno,
-		DuocApiBearerToken:  ssoResponseData.AccessToken,
-		DuocApiRefreshToken: ssoResponseData.RefreshToken,
+	usr := &common.User{
+		Email:        strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
+		Rut:          responseData.Rut + "-" + responseData.RutDV,
+		Username:     credentials.Username,
+		StudentCode:  responseData.CodAlumno,
+		StudentId:    responseData.IDAlumno,
+		AccessToken:  ssoResponseData.AccessToken,
+		RefreshToken: ssoResponseData.RefreshToken,
 	}
 
-	refreshClaims := jwt.Claims{Subject: strconv.Itoa(claims.StudentId)}
-
-	log.Debug("User authenticated successfully, returning Tokens", "username", credentials.Username)
-
-	return s.GenerateTokenPair(claims, refreshClaims)
-}
-
-func (s Service) RefreshToken(claims *Claims) (jwt.TokenPair, error) {
-	log.Debug("Trying to refresh user token", "username", claims.Username)
-	endpoint := "/auth/realms/WEB_APPS_PRD/protocol/openid-connect/token"
-
-	data := url.Values{}
-	data.Set("client_id", s.Config.Duoc.ClientId)
-	data.Set("client_secret", s.Config.Duoc.ClientSecret)
-	data.Set("grant_type", "refresh_token")
-	data.Set("refresh_token", claims.DuocApiRefreshToken)
-
-	response, code, err := s.Duoc.Request(s.Config.Duoc.SSOURL+endpoint, "POST", []byte(data.Encode()), nil)
-
-	if err != nil {
-		return jwt.TokenPair{}, err
-	}
-
-	if code != iris.StatusOK {
-		log.Debug("Error refreshing user tokens", "username", claims.Username, "error", string(response), "data", data)
-		return jwt.TokenPair{}, fmt.Errorf("invalid response structure: %s", string(response))
-	}
-
-	var ssoResponseData ssoAuthResponse
-
-	if err = json.Unmarshal(response, &ssoResponseData); err != nil {
-		return jwt.TokenPair{}, err
-	}
-
-	log.Debug("Successfully refreshed user tokens", "username", claims.Username)
-
-	claims.DuocApiBearerToken = ssoResponseData.AccessToken
-	claims.DuocApiRefreshToken = ssoResponseData.RefreshToken
-
-	refreshClaims := jwt.Claims{Subject: strconv.Itoa(claims.StudentId)} // Assuming StudentId is the appropriate field
-
-	log.Debug("User tokens refreshed successfully", "username", claims.Username)
-
-	return s.GenerateTokenPair(*claims, refreshClaims)
-}
-
-func (s Service) GenerateTokenPair(claims Claims, refreshClaims jwt.Claims) (jwt.TokenPair, error) {
-	log.Debug("Generating user token", "username", claims.Username)
-	return s.Signer.NewTokenPair(claims, refreshClaims, 120*time.Hour) // TODO!
+	return usr, nil
 }
