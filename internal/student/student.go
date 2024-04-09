@@ -9,6 +9,8 @@ import (
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -18,12 +20,14 @@ import (
 type Service struct {
 	Config *config.Config
 	Duoc   *duoc.Client
+	Caser  cases.Caser
 }
 
 func New(cfg *config.Config, duoc *duoc.Client) *Service {
 	return &Service{
 		Config: cfg,
 		Duoc:   duoc,
+		Caser:  cases.Title(language.LatinAmericanSpanish),
 	}
 }
 
@@ -70,7 +74,7 @@ func (s Service) convertDuocStudentDataToStudentData(original common.DuocStudent
 	}
 
 	NewStudentData := common.User{
-		FullName: original.NombreCompleto,
+		FullName: s.Caser.String(original.NombreCompleto),
 		Rut:      original.Rut,
 		Avatar:   avatar,
 	}
