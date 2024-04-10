@@ -56,7 +56,9 @@ func (s Service) Attendance(claims jwt.MapClaims) ([]common.Attendance, error) {
 		return []common.Attendance{}, err
 	}
 
-	if code != http.StatusOK {
+	if code == http.StatusNoContent {
+		return []common.Attendance{}, nil
+	} else if code != http.StatusOK {
 		return []common.Attendance{}, fmt.Errorf("invalid response structure: %s", string(response))
 	}
 
