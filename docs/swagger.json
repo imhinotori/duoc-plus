@@ -39,6 +39,12 @@
                             "$ref": "#/definitions/common.Attendance"
                         }
                     },
+                    "204": {
+                        "description": "No content",
+                        "schema": {
+                            "$ref": "#/definitions/common.Attendance"
+                        }
+                    },
                     "400": {
                         "description": "Error getting attendance.",
                         "schema": {
@@ -69,40 +75,6 @@
                         "type": "string",
                         "description": "Password of the user",
                         "name": "password",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "$ref": "#/definitions/common.AuthenticationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Error reading body.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/refresh": {
-            "post": {
-                "description": "Refresh Token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Refresh token",
-                        "name": "refresh_token",
                         "in": "query",
                         "required": true
                     }
@@ -182,6 +154,36 @@
                     }
                 }
             }
+        },
+        "/student": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get student information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved student information",
+                        "schema": {
+                            "$ref": "#/definitions/common.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Error getting student information.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -226,6 +228,23 @@
                     "type": "integer"
                 },
                 "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.Career": {
+            "type": "object",
+            "properties": {
+                "campus": {
+                    "type": "string"
+                },
+                "career_code": {
+                    "type": "string"
+                },
+                "career_name": {
+                    "type": "string"
+                },
+                "school": {
                     "type": "string"
                 }
             }
@@ -330,6 +349,52 @@
                 },
                 "percentage": {
                     "type": "number"
+                }
+            }
+        },
+        "common.User": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "access_token_expires_in": {
+                    "type": "integer"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "careers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.Career"
+                    }
+                },
+                "codAlumno": {
+                    "description": "It's probably an int, but well.",
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "idAlumno": {
+                    "description": "Why two ids (?) I don't know.",
+                    "type": "integer"
+                },
+                "refresh_expires_in": {
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "rut": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

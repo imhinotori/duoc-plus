@@ -29,6 +29,17 @@ definitions:
       refresh_token:
         type: string
     type: object
+  common.Career:
+    properties:
+      campus:
+        type: string
+      career_code:
+        type: string
+      career_name:
+        type: string
+      school:
+        type: string
+    type: object
   common.CareerSchedule:
     properties:
       career_name:
@@ -96,6 +107,37 @@ definitions:
       percentage:
         type: number
     type: object
+  common.User:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_in:
+        type: integer
+      avatar:
+        type: string
+      careers:
+        items:
+          $ref: '#/definitions/common.Career'
+        type: array
+      codAlumno:
+        description: It's probably an int, but well.
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      idAlumno:
+        description: Why two ids (?) I don't know.
+        type: integer
+      refresh_expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      rut:
+        type: string
+      username:
+        type: string
+    type: object
   common.Week:
     properties:
       friday:
@@ -154,6 +196,10 @@ paths:
           description: Successfully retrieved attendance
           schema:
             $ref: '#/definitions/common.Attendance'
+        "204":
+          description: No content
+          schema:
+            $ref: '#/definitions/common.Attendance'
         "400":
           description: Error getting attendance.
           schema:
@@ -174,28 +220,6 @@ paths:
       - description: Password of the user
         in: query
         name: password
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ok
-          schema:
-            $ref: '#/definitions/common.AuthenticationResponse'
-        "400":
-          description: Error reading body.
-          schema:
-            type: string
-  /auth/refresh:
-    post:
-      consumes:
-      - application/json
-      description: Refresh Token
-      parameters:
-      - description: Refresh token
-        in: query
-        name: refresh_token
         required: true
         type: string
       produces:
@@ -241,6 +265,24 @@ paths:
             $ref: '#/definitions/common.CareerSchedule'
         "400":
           description: Error getting schedule.
+          schema:
+            type: string
+      security:
+      - Bearer: []
+  /student:
+    get:
+      consumes:
+      - application/json
+      description: Get student information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved student information
+          schema:
+            $ref: '#/definitions/common.User'
+        "400":
+          description: Error getting student information.
           schema:
             type: string
       security:

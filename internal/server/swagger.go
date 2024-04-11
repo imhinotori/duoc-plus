@@ -1,18 +1,13 @@
 package server
 
 import (
-	_ "github.com/imhinotori/duoc-plus/docs"
-	"github.com/iris-contrib/swagger"
-	"github.com/iris-contrib/swagger/swaggerFiles"
+	"github.com/imhinotori/duoc-plus/docs"
+	"github.com/swaggo/files"       // swagger embed files
+	"github.com/swaggo/gin-swagger" // gin-swagger middleware
 )
 
-func handleSwagger(s *Server) {
-	_ = swagger.Handler(swaggerFiles.Handler,
-		swagger.URL("/swagger/swagger.json"),
-		swagger.DeepLinking(true),
-		swagger.Prefix("/swagger"),
-	)
+func (s *Server) registerSwagger() {
+	docs.SwaggerInfo.BasePath = "/"
 
-	//s.Application.GET("/swagger", swaggerUI)
-	//s.Application.GET("/swagger/{any:path}", swaggerUI)
+	s.Application.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

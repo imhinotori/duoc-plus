@@ -53,6 +53,8 @@ func New(cfg *config.Config) (*Server, error) {
 		Handlers:      &Handlers{},
 	}
 
+	server.registerSwagger()
+
 	server.Handlers.authHandler = auth.Handler{Service: auth.New(cfg, server.Duoc)}
 	server.Handlers.attendanceHandler = attendance.Handler{Service: attendance.New(cfg, server.Duoc)}
 	server.Handlers.scheduleHandler = schedule.Handler{Service: schedule.New(cfg, server.Duoc)}
