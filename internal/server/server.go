@@ -10,7 +10,6 @@ import (
 	"github.com/imhinotori/duoc-plus/internal/grades"
 	"github.com/imhinotori/duoc-plus/internal/schedule"
 	"github.com/imhinotori/duoc-plus/internal/student"
-	"github.com/kataras/iris/v12/middleware/jwt"
 	"net"
 	"strconv"
 )
@@ -18,8 +17,6 @@ import (
 type Server struct {
 	Application   *gin.Engine
 	Configuration *config.Config
-	JWTSigner     *jwt.Signer
-	JWTVerifier   *jwt.Verifier
 	Duoc          *duoc.Client
 	Handlers      *Handlers
 }
@@ -45,17 +42,15 @@ func New(cfg *config.Config) (*Server, error) {
 	}
 
 	httpClient, err := duoc.NewHost(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	server := &Server{
 		Application:   app,
 		Configuration: cfg,
 		Duoc:          httpClient,
 		Handlers:      &Handlers{},
-	}
-
-	err = server.assignJWTFiles()
-	if err != nil {
-		return nil, err
 	}
 
 	server.Handlers.authHandler = auth.Handler{Service: auth.New(cfg, server.Duoc)}
