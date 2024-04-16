@@ -28,6 +28,7 @@ type JWT struct {
 	PublicKey    string `koanf:"public-key"`
 	AutoGenerate bool   `koanf:"auto-generate"`
 	Key          string `koanf:"key"`
+	Realm        string `koanf:"realm"`
 }
 
 type Duoc struct {
@@ -56,6 +57,7 @@ func LoadFromEnvironment() *Config {
 			PublicKey:    envutil.GetEnv("jwt_public_key", "./public.pem"),
 			AutoGenerate: envutil.GetEnvBool("jwt_auto_generate"),
 			Key:          envutil.GetEnv("jwt_key", "secret"),
+			Realm:        envutil.GetEnv("jwt_realm", "DuocUC"),
 		},
 		Duoc: Duoc{
 			SSOURL:       envutil.GetEnv("duoc_sso_url", "duoc_sso_url"),
