@@ -3,10 +3,10 @@ package grades
 import (
 	"encoding/json"
 	"fmt"
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
+	"github.com/imhinotori/duoc-plus/internal/database"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"github.com/imhinotori/duoc-plus/internal/helper"
 	"net/http"
@@ -14,24 +14,26 @@ import (
 )
 
 type Service struct {
-	Config *config.Config
-	Duoc   *duoc.Client
+	Config   *config.Config
+	Database *database.Database
+	Duoc     *duoc.Client
 }
 
-func New(cfg *config.Config, duoc *duoc.Client) *Service {
+func New(cfg *config.Config, db *database.Database, duoc *duoc.Client) *Service {
 	return &Service{
-		Config: cfg,
-		Duoc:   duoc,
+		Config:   cfg,
+		Database: db,
+		Duoc:     duoc,
 	}
 }
 
-func (s Service) Grades(claims jwt.MapClaims) ([]common.Grades, error) {
+func (s Service) Grades(usr common.User) ([]common.Grades, error) {
 	endpoint := "/notas_v1.0/v1/notasAlumno"
 
 	query := url.Values{}
-	query.Set("codAlumno", claims["student_code"].(string))
+	query.Set("codAlumno", usr.StudentCode)
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, usr.AccessToken)
 
 	if err != nil {
 		return []common.Grades{}, err
@@ -47,14 +49,14 @@ func (s Service) Grades(claims jwt.MapClaims) ([]common.Grades, error) {
 		return []common.Grades{}, err
 	}
 
-	log.Debug("Getting grades data", "username", claims["username"])
+	log.Debug("Getting grades data", "username", usr.Username)
 
 	grades := make([]common.Grades, 0, len(responseData))
 
 	for i, data := range responseData {
 		grades = append(grades, convertDuocGradesToGrades(data))
 
-		log.Debug("Getting grades data", "username", claims["username"], "course", i, "courseName", data.DegreeName)
+		log.Debug("Getting grades data", "username", usr.Username, "course", i, "courseName", data.DegreeName)
 	}
 
 	return grades, nil

@@ -7,6 +7,7 @@ type Config struct {
 	HTTP    HTTP    `koanf:"http"`
 	JWT     JWT     `koanf:"jwt"`
 	Duoc    Duoc    `koanf:"duoc"`
+	Redis   Redis   `koanf:"redis"`
 }
 
 type General struct {
@@ -40,6 +41,11 @@ type Duoc struct {
 	GrantType    string `koanf:"grant-type"`
 }
 
+type Redis struct {
+	ConnectionURI string `koanf:"connection-uri"`
+	Timeout       int    `koanf:"timeout"`
+}
+
 func LoadFromEnvironment() *Config {
 	return &Config{
 		General: General{
@@ -53,7 +59,7 @@ func LoadFromEnvironment() *Config {
 			SSL:     envutil.GetEnvBool("ssl_enabled"),
 		},
 		JWT: JWT{
-			PrivateKey:   envutil.GetEnv("jwt_private_key", "./private.pem"),
+			PrivateKey:   envutil.GetEnv("jwt_private_key", "./private.key"),
 			PublicKey:    envutil.GetEnv("jwt_public_key", "./public.pem"),
 			AutoGenerate: envutil.GetEnvBool("jwt_auto_generate"),
 			Key:          envutil.GetEnv("jwt_key", "secret"),
@@ -66,6 +72,9 @@ func LoadFromEnvironment() *Config {
 			ClientSecret: envutil.GetEnv("duoc_client_secret", "secret"),
 			ClientId:     envutil.GetEnv("duoc_client_id", "client"),
 			GrantType:    envutil.GetEnv("duoc_grant_type", "password"),
+		},
+		Redis: Redis{
+			ConnectionURI: envutil.GetEnv("redis_connection_uri", "redis://localhost:6379"),
 		},
 	}
 }

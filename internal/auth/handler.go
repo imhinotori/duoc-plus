@@ -2,22 +2,24 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/imhinotori/duoc-plus/internal/common"
+	"github.com/labstack/echo/v4"
 	"net/http"
+	"time"
 )
 
 type Provider interface {
-	Authenticate(ctx *gin.Context)
-	RefreshToken(ctx *gin.Context)
+	Authenticate(ctx echo.Context) error
 }
 
 type Handler struct {
 	Service *Service
 }
 
-func (h Handler) Start(app *gin.Engine) {
-	app.POST("/login", h.Service.AuthMiddleware.LoginHandler)
+func (h Handler) Start(app *echo.Echo) {
 	party := app.Group("/auth")
-	party.GET("/refresh_token", h.Service.AuthMiddleware.RefreshHandler)
+	party.POST("", h.Authenticate)
 }
 
 // Authenticate
@@ -29,24 +31,51 @@ func (h Handler) Start(app *gin.Engine) {
 // @Success 200 {object} common.AuthenticationResponse	"ok"
 // @Failure 400 {object} string "Error reading body."
 // @Router /auth [post]
-func (h Handler) Authenticate(ctx *gin.Context) {
-	var creds Credentials
+func (h Handler) Authenticate(ctx echo.Context) error {
+	var credentials Credentials
 
-	if err := ctx.Bind(&creds); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+	if err := ctx.Bind(&credentials); err != nil {
+		return ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "Error reading body",
 		})
-		return
 
 	}
 
-	tokens, err := h.Service.Authenticate(creds)
+	user, err := h.Service.Authenticate(credentials)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		return ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
-		return
 	}
 
-	ctx.JSON(http.StatusOK, tokens)
+	uniqueSessionId := h.Service.IDGenerator()
+
+	expireTime := time.Now().Add(time.Hour * 7)
+
+	claims := &common.JWTClaims{
+		ID:       uniqueSessionId,
+		Username: user.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expireTime),
+		},
+	}
+
+	err = h.Service.saveAccountDetails(user, uniqueSessionId)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error saving account details",
+		})
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte(h.Service.Config.JWT.Key))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error generating token",
+		})
+
+	}
+
+	return ctx.JSON(http.StatusOK, gin.H{"token": t, "expires_on": expireTime.Format(time.RFC3339)})
 }

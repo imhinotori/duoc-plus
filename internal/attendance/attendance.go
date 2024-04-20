@@ -3,10 +3,10 @@ package attendance
 import (
 	"encoding/json"
 	"fmt"
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
+	"github.com/imhinotori/duoc-plus/internal/database"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"github.com/imhinotori/duoc-plus/internal/helper"
 	"net/http"
@@ -18,8 +18,9 @@ import (
 )
 
 type Service struct {
-	Config *config.Config
-	Duoc   *duoc.Client
+	Config   *config.Config
+	Database *database.Database
+	Duoc     *duoc.Client
 }
 
 var monthsMap = map[string]string{
@@ -37,20 +38,21 @@ var monthsMap = map[string]string{
 	"DICIEMBRE":  "December",
 }
 
-func New(cfg *config.Config, duoc *duoc.Client) *Service {
+func New(cfg *config.Config, db *database.Database, duoc *duoc.Client) *Service {
 	return &Service{
-		Config: cfg,
-		Duoc:   duoc,
+		Config:   cfg,
+		Database: db,
+		Duoc:     duoc,
 	}
 }
 
-func (s Service) Attendance(claims jwt.MapClaims) ([]common.Attendance, error) {
+func (s Service) Attendance(usr common.User) ([]common.Attendance, error) {
 	endpoint := "/asistencia_v1.0/v1/asistenciaCompleta"
 
 	query := url.Values{}
-	query.Set("codAlumno", claims["student_code"].(string))
+	query.Set("codAlumno", usr.StudentCode)
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, usr.AccessToken)
 
 	if err != nil {
 		return []common.Attendance{}, err
@@ -68,7 +70,7 @@ func (s Service) Attendance(claims jwt.MapClaims) ([]common.Attendance, error) {
 		return []common.Attendance{}, err
 	}
 
-	log.Debug("Getting attendance data", "username", claims["username"].(string))
+	log.Debug("Getting attendance data", "username", usr.Username)
 
 	returnData := make([]common.Attendance, len(responseData))
 

@@ -1,36 +1,26 @@
 package grades
 
 import (
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
-	"github.com/gin-contrib/cache"
-	"github.com/gin-contrib/cache/persistence"
-	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/imhinotori/duoc-plus/internal/auth"
+	"github.com/imhinotori/duoc-plus/internal/common"
+	"github.com/labstack/echo/v4"
 	"net/http"
-	"time"
 )
 
 type Provider interface {
-	Attendance(ctx *gin.Context)
+	Attendance(ctx echo.Context) error
 }
 
 type Handler struct {
 	Service *Service
 }
 
-func (h Handler) Start(app *gin.Engine, authService *auth.Service, storage ...persistence.CacheStore) {
+func (h Handler) Start(app *echo.Echo, authService *auth.Service) {
 	party := app.Group("/grades")
-	party.Use(authService.AuthMiddleware.MiddlewareFunc())
-	{
-		if storage != nil && storage[0] != nil {
-			party.GET("/", cache.CachePage(storage[0], time.Minute, func(c *gin.Context) {
-				h.Grades(c)
-			}))
-		} else {
-			party.GET("/", h.Grades)
-		}
-	}
+	party.Use(authService.AuthMiddleware)
+	party.GET("", h.Grades)
 
 }
 
@@ -42,17 +32,25 @@ func (h Handler) Start(app *gin.Engine, authService *auth.Service, storage ...pe
 // @Success 200 {object} common.Grades	"Successfully retrieved grades"
 // @Failure 400 {string} string "Error getting grades."
 // @Router /grades [get]
-func (h Handler) Grades(ctx *gin.Context) {
-	claims := jwt.ExtractClaims(ctx)
+func (h Handler) Grades(ctx echo.Context) error {
+	userSessionId := ctx.Get("user").(*jwt.Token)
+	claims := userSessionId.Claims.(*common.JWTClaims)
 
-	grades, err := h.Service.Grades(claims)
+	usr, err := h.Service.Database.GetUserFromSessionId(claims.ID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		log.Debug("Error getting user from session ID", "error", err)
+		return ctx.JSON(http.StatusBadRequest, map[string]interface{}{
 			"message": err.Error(),
 		})
-		log.Debug("Error getting grades", "error", err)
-		return
 	}
 
-	ctx.JSON(http.StatusOK, grades)
+	grades, err := h.Service.Grades(*usr)
+	if err != nil {
+		log.Debug("Error getting grades", "error", err)
+		return ctx.JSON(http.StatusBadRequest, map[string]interface{}{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, grades)
 }

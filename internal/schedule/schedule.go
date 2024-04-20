@@ -3,10 +3,10 @@ package schedule
 import (
 	"encoding/json"
 	"fmt"
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
+	"github.com/imhinotori/duoc-plus/internal/database"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -17,24 +17,26 @@ import (
 )
 
 type Service struct {
-	Config *config.Config
-	Duoc   *duoc.Client
+	Config   *config.Config
+	Database *database.Database
+	Duoc     *duoc.Client
 }
 
-func New(cfg *config.Config, duoc *duoc.Client) *Service {
+func New(cfg *config.Config, db *database.Database, duoc *duoc.Client) *Service {
 	return &Service{
-		Config: cfg,
-		Duoc:   duoc,
+		Config:   cfg,
+		Database: db,
+		Duoc:     duoc,
 	}
 }
 
-func (s Service) Schedule(claims jwt.MapClaims) ([]common.CareerSchedule, error) {
+func (s Service) Schedule(usr common.User) ([]common.CareerSchedule, error) {
 	endpoint := "/horario_v1.0/v1/horario"
 
 	query := url.Values{}
-	query.Set("alumnoId", strconv.Itoa(int(claims["student_id"].(float64))))
+	query.Set("alumnoId", strconv.Itoa(usr.StudentId))
 
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, usr.AccessToken)
 
 	if err != nil {
 		return []common.CareerSchedule{}, err
@@ -50,7 +52,7 @@ func (s Service) Schedule(claims jwt.MapClaims) ([]common.CareerSchedule, error)
 		return []common.CareerSchedule{}, err
 	}
 
-	log.Debug("Getting schedule data", "username", claims["username"].(string))
+	log.Debug("Getting schedule data", "username", usr.Username)
 
 	caser := cases.Title(language.LatinAmericanSpanish)
 	schedule := convertDuocScheduleToSchedule(responseData, caser)

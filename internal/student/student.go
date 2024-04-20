@@ -4,10 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/charmbracelet/log"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/imhinotori/duoc-plus/internal/config"
+	"github.com/imhinotori/duoc-plus/internal/database"
 	"github.com/imhinotori/duoc-plus/internal/duoc"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -18,27 +18,29 @@ import (
 )
 
 type Service struct {
-	Config *config.Config
-	Duoc   *duoc.Client
-	Caser  cases.Caser
+	Config   *config.Config
+	Duoc     *duoc.Client
+	Database *database.Database
+	Caser    cases.Caser
 }
 
-func New(cfg *config.Config, duoc *duoc.Client) *Service {
+func New(cfg *config.Config, db *database.Database, duoc *duoc.Client) *Service {
 	return &Service{
-		Config: cfg,
-		Duoc:   duoc,
-		Caser:  cases.Title(language.LatinAmericanSpanish),
+		Config:   cfg,
+		Duoc:     duoc,
+		Database: db,
+		Caser:    cases.Title(language.LatinAmericanSpanish),
 	}
 }
 
-func (s Service) StudentData(claims jwt.MapClaims) (common.User, error) {
+func (s Service) StudentData(usr common.User) (common.User, error) {
 	endpoint := "/credencial-virtual_v1.0/v1/datosAlumno"
 
 	query := url.Values{}
-	query.Set("alumnoId", strconv.Itoa(int(claims["student_id"].(float64))))
+	query.Set("alumnoId", strconv.Itoa(usr.StudentId))
 
-	log.Debug("Getting student data", "studentId", claims["student_id"])
-	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, claims["api_bearer"].(string))
+	log.Debug("Getting student data", "studentId", usr.StudentId)
+	response, code, err := s.Duoc.RequestWithQuery(s.Config.Duoc.MobileAPIUrl+endpoint, "GET", nil, query, usr.AccessToken)
 
 	if err != nil {
 		return common.User{}, err
@@ -54,9 +56,9 @@ func (s Service) StudentData(claims jwt.MapClaims) (common.User, error) {
 		return common.User{}, err
 	}
 
-	log.Debug("Converting student data to new format", "username", claims["username"].(string))
+	log.Debug("Converting student data to new format", "username", usr.Username)
 
-	returnData, err := s.convertDuocStudentDataToStudentData(responseData, claims)
+	returnData, err := s.convertDuocStudentDataToStudentData(responseData, usr)
 	if err != nil {
 		return common.User{}, err
 	}
@@ -64,13 +66,13 @@ func (s Service) StudentData(claims jwt.MapClaims) (common.User, error) {
 	return returnData, nil
 }
 
-func (s Service) convertDuocStudentDataToStudentData(original common.DuocStudentData, claims jwt.MapClaims) (common.User, error) {
+func (s Service) convertDuocStudentDataToStudentData(original common.DuocStudentData, usr common.User) (common.User, error) {
 	var avatar string
 
 	if original.Avatar != "" {
 		avatar = original.Avatar
 	} else {
-		avatar = fmt.Sprintf("https://www.gravatar.com/avatar/%x", sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(claims["email"].(string))))))
+		avatar = fmt.Sprintf("https://www.gravatar.com/avatar/%x", sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(usr.Email)))))
 	}
 
 	NewStudentData := common.User{
