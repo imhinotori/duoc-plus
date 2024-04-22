@@ -50,6 +50,7 @@ func (h Handler) Authenticate(ctx echo.Context) error {
 	uniqueSessionId := h.Service.IDGenerator()
 
 	expireTime := time.Now().Add(time.Hour * 7)
+	expirationTime := expireTime.Sub(time.Now())
 
 	claims := &common.JWTClaims{
 		ID:       uniqueSessionId,
@@ -59,7 +60,7 @@ func (h Handler) Authenticate(ctx echo.Context) error {
 		},
 	}
 
-	err = h.Service.saveAccountDetails(user, uniqueSessionId)
+	err = h.Service.saveAccountDetails(user, uniqueSessionId, expirationTime)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"message": "Error saving account details",

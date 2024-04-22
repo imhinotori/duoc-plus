@@ -80,7 +80,7 @@ func (s Service) Authenticate(credentials Credentials) (*common.User, error) {
 	return usr, nil
 }
 
-func (s Service) saveAccountDetails(account *common.User, id string) error {
+func (s Service) saveAccountDetails(account *common.User, id string, expirationTime time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 
 	defer cancel()
@@ -90,7 +90,7 @@ func (s Service) saveAccountDetails(account *common.User, id string) error {
 		return err
 	}
 
-	s.Database.Redis.Set(ctx, id, jsonUsr, 0)
+	s.Database.Redis.Set(ctx, id, jsonUsr, expirationTime)
 
 	return nil
 
