@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/imhinotori/duoc-plus/internal/common"
 	"github.com/labstack/echo/v4"
@@ -35,7 +34,7 @@ func (h Handler) Authenticate(ctx echo.Context) error {
 	var credentials Credentials
 
 	if err := ctx.Bind(&credentials); err != nil {
-		return ctx.JSON(http.StatusBadRequest, gin.H{
+		return ctx.JSON(http.StatusBadRequest, map[string]any{
 			"message": "Error reading body",
 		})
 
@@ -43,7 +42,7 @@ func (h Handler) Authenticate(ctx echo.Context) error {
 
 	user, err := h.Service.Authenticate(credentials)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, gin.H{
+		return ctx.JSON(http.StatusBadRequest, map[string]any{
 			"message": err.Error(),
 		})
 	}
@@ -62,7 +61,7 @@ func (h Handler) Authenticate(ctx echo.Context) error {
 
 	err = h.Service.saveAccountDetails(user, uniqueSessionId)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, gin.H{
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"message": "Error saving account details",
 		})
 	}
@@ -71,11 +70,11 @@ func (h Handler) Authenticate(ctx echo.Context) error {
 
 	t, err := token.SignedString([]byte(h.Service.Config.JWT.Key))
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, gin.H{
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"message": "Error generating token",
 		})
 
 	}
 
-	return ctx.JSON(http.StatusOK, gin.H{"token": t, "expires_on": expireTime.Format(time.RFC3339)})
+	return ctx.JSON(http.StatusOK, map[string]any{"access_token": t, "expires_on": expireTime.Format(time.RFC3339)})
 }
