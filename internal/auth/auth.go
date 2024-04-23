@@ -68,9 +68,9 @@ func (s Service) Authenticate(credentials Credentials) (*common.User, error) {
 	}
 
 	usr := &common.User{
-		Email:        strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
+		Email:        credentials.Username,
 		Rut:          enrollmentData.Rut + "-" + enrollmentData.RutDV,
-		Username:     credentials.Username,
+		Username:     strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
 		StudentCode:  enrollmentData.StudentCode,
 		StudentId:    enrollmentData.StudentId,
 		AccessToken:  ssoData.AccessToken,
