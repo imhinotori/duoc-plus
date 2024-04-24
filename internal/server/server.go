@@ -71,6 +71,10 @@ func New(cfg *config.Config) (*Server, error) {
 	server.Handlers.gradesHandler = grades.Handler{Service: grades.New(cfg, db, server.Duoc)}
 	server.Handlers.studentHandler = student.Handler{Service: student.New(cfg, db, server.Duoc)}
 
+	server.Application.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
+
 	return server, nil
 }
 
