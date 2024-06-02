@@ -81,8 +81,6 @@ func New(cfg *config.Config) (*Server, error) {
 func (s *Server) Run() error {
 	addr := net.JoinHostPort(s.Configuration.HTTP.Address, strconv.Itoa(s.Configuration.HTTP.Port))
 
-	log.Warn("SSL disabled, this is not recommended.")
-
 	s.Handlers.authHandler.Start(s.Application)
 	s.Handlers.attendanceHandler.Start(s.Application, s.Handlers.authHandler.Service)
 	s.Handlers.scheduleHandler.Start(s.Application, s.Handlers.authHandler.Service)
@@ -92,10 +90,8 @@ func (s *Server) Run() error {
 	//handleSwagger(s)
 
 	if s.Configuration.HTTP.SSL {
-		log.Info("SSL enabled.")
-
 		return s.Application.StartTLS(addr, s.Configuration.HTTP.SSLCert, s.Configuration.HTTP.SSLKey)
 	}
-
+	log.Warn("SSL disabled, this is not recommended.")
 	return s.Application.Start(addr)
 }
