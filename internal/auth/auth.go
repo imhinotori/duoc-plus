@@ -68,13 +68,15 @@ func (s Service) Authenticate(credentials Credentials) (*common.User, error) {
 	}
 
 	usr := &common.User{
-		Email:        credentials.Username,
-		Rut:          enrollmentData.Rut + "-" + enrollmentData.RutDV,
-		Username:     strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
-		StudentCode:  enrollmentData.StudentCode,
-		StudentId:    enrollmentData.StudentId,
-		AccessToken:  ssoData.AccessToken,
-		RefreshToken: ssoData.RefreshToken,
+		Email:                 credentials.Username,
+		Rut:                   enrollmentData.Rut + "-" + enrollmentData.RutDV,
+		Username:              strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
+		StudentCode:           enrollmentData.StudentCode,
+		StudentId:             enrollmentData.StudentId,
+		AccessToken:           ssoData.AccessToken,
+		AccessTokenExpiresIn:  ssoData.ExpiresIn,
+		RefreshToken:          ssoData.RefreshToken,
+		RefreshTokenExpiresIn: ssoData.RefreshExpiresIn,
 	}
 
 	return usr, nil
@@ -90,7 +92,7 @@ func (s Service) saveAccountDetails(account *common.User, id string, expirationT
 		return err
 	}
 
-	s.Database.Redis.Set(ctx, id, jsonUsr, expirationTime)
+	s.Database.Users.Set(ctx, id, jsonUsr, expirationTime)
 
 	return nil
 
