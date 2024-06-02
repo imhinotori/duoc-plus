@@ -7,18 +7,26 @@ import (
 )
 
 type Database struct {
-	Redis redis.Client
+	Users     redis.Client
+	Scheduler redis.Client
 }
 
 func New(cfg *config.Config) (*Database, error) {
-	redisClient, err := newRedisClient(cfg)
+	redisClient, err := newRedisClient(cfg, 0)
 	if err != nil {
-		log.Debugf("error creating Redis client: %s", err)
+		log.Debugf("error creating Users client: %s", err)
+		return nil, err
+	}
+
+	schedulerRedisClient, err := newRedisClient(cfg, 5)
+	if err != nil {
+		log.Debugf("error creating Users client: %s", err)
 		return nil, err
 	}
 
 	return &Database{
-		Redis: *redisClient,
+		Users:     *redisClient,
+		Scheduler: *schedulerRedisClient,
 	}, nil
 
 }
