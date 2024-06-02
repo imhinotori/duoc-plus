@@ -1,11 +1,10 @@
 package server
 
 import (
-	"github.com/imhinotori/duoc-plus/docs"
+	_ "github.com/imhinotori/duoc-plus/docs"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func (s *Server) registerSwagger() {
-	docs.SwaggerInfo.BasePath = "/"
-
-	//s.Application.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	s.Application.GET("/swagger/*", echoSwagger.WrapHandler)
 }

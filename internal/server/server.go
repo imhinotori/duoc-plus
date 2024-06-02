@@ -63,7 +63,7 @@ func New(cfg *config.Config) (*Server, error) {
 	server.Application.Use(middleware.Logger())
 	server.Application.Use(middleware.Recover())
 
-	//server.registerSwagger()
+	server.registerSwagger()
 
 	server.Handlers.authHandler = auth.Handler{Service: auth.New(cfg, db, server.Duoc)}
 	server.Handlers.attendanceHandler = attendance.Handler{Service: attendance.New(cfg, db, server.Duoc)}
