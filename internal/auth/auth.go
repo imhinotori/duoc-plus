@@ -68,13 +68,15 @@ func (s Service) Authenticate(credentials Credentials) (*common.User, error) {
 	}
 
 	usr := &common.User{
-		Email:        credentials.Username,
-		Rut:          enrollmentData.Rut + "-" + enrollmentData.RutDV,
-		Username:     strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
-		StudentCode:  enrollmentData.StudentCode,
-		StudentId:    enrollmentData.StudentId,
-		AccessToken:  ssoData.AccessToken,
-		RefreshToken: ssoData.RefreshToken,
+		Email:                 credentials.Username,
+		Rut:                   enrollmentData.Rut + "-" + enrollmentData.RutDV,
+		Username:              strings.Replace(credentials.Username, "@duocuc.cl", "", -1),
+		StudentCode:           enrollmentData.StudentCode,
+		StudentId:             enrollmentData.StudentId,
+		AccessToken:           ssoData.AccessToken,
+		AccessTokenExpiresIn:  ssoData.ExpiresIn,
+		RefreshToken:          ssoData.RefreshToken,
+		RefreshTokenExpiresIn: ssoData.RefreshExpiresIn,
 	}
 
 	return usr, nil
@@ -94,4 +96,22 @@ func (s Service) saveAccountDetails(account *common.User, id string, expirationT
 
 	return nil
 
+}
+
+func (s Service) getAccountDetails(uniqueId string) (common.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	data, err := s.Database.Redis.Get(ctx, uniqueId).Result()
+	if err != nil {
+		return common.User{}, err
+	}
+
+	var usr common.User
+	err = json.Unmarshal([]byte(data), &usr)
+	if err != nil {
+		return common.User{}, err
+	}
+
+	return usr, nil
 }
