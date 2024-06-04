@@ -102,7 +102,7 @@ func (s Service) getAccountDetails(uniqueId string) (common.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	data, err := s.Database.Redis.Get(ctx, uniqueId).Result()
+	data, err := s.Database.Users.Get(ctx, uniqueId).Result()
 	if err != nil {
 		return common.User{}, err
 	}
