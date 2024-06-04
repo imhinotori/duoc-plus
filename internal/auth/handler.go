@@ -18,7 +18,7 @@ type Handler struct {
 func (h Handler) Start(app *echo.Echo) {
 	party := app.Group("/auth")
 	party.POST("", h.Authenticate)
-	party.GET("refresh", h.Refresh)
+	party.POST("/refresh", h.Refresh)
 }
 
 // Authenticate
